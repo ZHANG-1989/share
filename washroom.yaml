@@ -1,0 +1,1864 @@
+esphome:
+  name: washroom
+  friendly_name: washroom
+  includes:
+    - incluede\esp_timer.h    
+  on_boot: 
+    then:
+      - delay: 5s
+      # - button.press: ld2410_query   # 开机 5 秒触发查询
+
+      - delay: 5min
+      - switch.turn_on: gpio22_out
+
+      - delay: 5s        
+      - switch.turn_on: engineering_mode_switch  
+
+        
+      - repeat:
+          count: 4
+          then:
+            - button.press: daiji
+            - delay: 1s
+      - lambda: |-
+          #define MASK_X1011 (BIT_PRES | BIT_FUNC | BIT_DARK | BIT_TIME)   // 0x0F
+          #define VAL_X1011  (BIT_PRES | BIT_DARK | BIT_TIME)             // 0x0B
+          #define MASK_X0XXX (BIT_PRES)                                   // 0x08
+          #define VAL_X0XXX  (0x00)
+          #define MASK_010XXX (BIT_HUMM | BIT_PRES | BIT_DRYI)  // 0x38 = 0b00111000
+          #define VAL_010XXX  (BIT_HUMM)                        // 0x10 = 0b00010000
+
+          #define BIT_TIME   0x01  // bit0
+          #define BIT_DARK   0x02  // bit1
+          #define BIT_FUNC   0x04  // bit2
+          #define BIT_PRES   0x08  // bit3          
+          #define BIT_HUMM   0x10  // bit4   
+          #define BIT_DRYI   0x20  // bit5            
+          #define BIT_MOFF   0x40  // bit6  
+#bit7 bit6 bit5 bit4 bit3 bit2 bit1 bit0
+#  |    |    |    |    |    |    |    |
+#  |    |    |    |    |    |    |    └─ 时间段
+#  |    |    |    |    |    |    └───── 暗环境
+#  |    |    |    |    |    └────────── 功能开关
+#  |    |    |    |    └─────────────── 人在
+#  |    |    |    └──────────────────── 湿度传感器
+#  |    |    |_________________________ 人工关闭锁
+esp32:
+  board: esp32dev
+  flash_size: 4MB
+  framework:
+    type: esp-idf    
+    advanced:
+      ignore_efuse_mac_crc: True
+      ignore_efuse_custom_mac: True
+    sdkconfig_options:
+      {
+      "CONFIG_ESP_PHY_INIT_DATA_IN_PARTITION": n,
+      "CONFIG_ESP_PHY_REDUCE_TX_POWER": y,
+      "CONFIG_FREERTOS_UNICORE": y,
+      "CONFIG_BOOTLOADER_GPIO_ENABLE": y,
+      "CONFIG_BOOTLOADER_GPIO_PULL_DOWN": y,
+      }
+preferences:
+  flash_write_interval:
+    seconds: 600
+ota:
+  - platform: esphome
+    password: "a29c77960ab626463866d99bd53d1e51"
+wifi:
+  networks:
+    - ssid: "RowlinZhang"
+      password: "15281014413"
+    - ssid: "CMCC-TEST"
+      password: "15281014413"
+  ap:
+    ssid: "Zhang Fallback Hotspot"
+    password: "15281014413"
+api:
+  reboot_timeout:
+    seconds: 0
+  encryption:
+    key: "Dg4ro3NMnz3tNJJtJqKa5PDrX6Qz49jAzDUfkNIVTcE="
+
+  actions:
+    - action: set_ld2410_bluetooth_password
+      variables:
+        password: string
+      then:
+        - bluetooth_password.set:
+            id: my_ld2410
+            password: !lambda 'return password;'  
+captive_portal:
+time:
+  - platform: sntp
+    id: my_time
+    timezone: Asia/Taipei
+
+
+ 
+# Web 管理页面
+
+web_server:
+  port: 8888
+  include_internal: true
+  version: 3
+  sorting_groups:
+    - id: sorting_group_time_settings
+      name: "Time Settings"
+      sorting_weight: 10
+    - id: sorting_group_number_settings
+      name: "number Settings"
+      sorting_weight: 20
+logger:
+  baud_rate: 0  # 关闭默认UART0日志，避免与传感器串口冲突
+  # logs:
+  #   remote.raw: NONE
+# ---------------- UART ----------------
+uart:
+  - id: uart_ld2410
+    tx_pin: GPIO17
+    rx_pin: GPIO16
+    baud_rate: 256000                           
+    parity: NONE
+    stop_bits: 1
+
+
+
+i2c:
+  sda: GPIO32
+  scl: GPIO33
+  scan: true
+  id: bus_a
+  frequency: 100kHz   # AHT20 推荐100kHz，不建议超过400kHz
+
+            
+# ---------------- LD2410 ----------------
+ld2410:
+  id: my_ld2410
+  uart_id: uart_ld2410
+
+
+# ---------------- Sensors ----------------
+sensor:
+
+  - platform: ld2410
+    moving_distance:
+      name: "Moving Distance"      
+    still_distance:
+      name: "Still Distance"
+    moving_energy:
+      name: "Moving Energy"
+    still_energy:
+      name: "Still Energy"
+    detection_distance:
+      name: "Detection Distance"
+      id: detection_distance_sensor   # ✅ 必须加上 ID
+
+    light:
+      name: Light
+    g0:
+      move_energy:
+        name: G0 move energy
+      still_energy:
+        name: G0 still energy
+    g1:
+      move_energy:
+        name: G1 move energy
+      still_energy:
+        name: G1 still energy
+    g2:
+      move_energy:
+        name: G2 move energy
+      still_energy:
+        name: G2 still energy
+    g3:
+      move_energy:
+        name: G3 move energy
+      still_energy:
+        name: G3 still energy
+    g4:
+      move_energy:
+        name: G4 move energy
+      still_energy:
+        name: G4 still energy
+    g5:
+      move_energy:
+        name: G5 move energy
+      still_energy:
+        name: G5 still energy
+    g6:
+      move_energy:
+        name: G6 move energy
+      still_energy:
+        name: G6 still energy
+    g7:
+      move_energy:
+        name: G7 move energy
+      still_energy:
+        name: G7 still energy
+    g8:
+      move_energy:
+        name: G8 move energy
+      still_energy:
+        name: G8 still energy      
+
+
+  # =========================
+  # 原始 ADC
+  # =========================
+  - platform: adc
+    pin: GPIO35
+    id: ldr_adc
+    attenuation: 12db
+    update_interval: 50ms
+    filters:
+      # 去瞬态毛刺
+      - sliding_window_moving_average:
+          window_size: 15
+          send_every: 5
+      # 平滑变化
+      - exponential_moving_average:
+          alpha: 0.2
+
+# =========================
+# 亮度百分比（分段曲线映射）
+# =========================
+  - platform: template
+    name: "环境亮度"
+    id: env_brightness        # ← 一定要有
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    update_interval: 1s
+    lambda: |-
+      float v = id(ldr_adc).state;
+
+      // 边界保护
+      if (v <= 0.14) return 0.0f;
+      if (v >= 3.12)  return 100.0f;
+
+      float brightness = 0.0f;
+
+      // =========================
+      // 低亮区：0.14V ~ 1.7V → 0% ~ 50%
+      // =========================
+      if (v <= 1.7) {
+        float x = (v - 0.14) / (1.7 - 0.14);   // 归一化 0~1
+        float gamma = 0.6;                   // <1：暗部更灵敏
+        brightness = 50.0 * powf(x, gamma);
+      }
+      // =========================
+      // 高亮区：1.7V ~ 3.3V → 50% ~ 100%
+      // =========================
+      else {
+        float x = (v - 1.7) / (3.12 - 1.7);    // 归一化 0~1
+        float gamma = 1.8;                   // >1：高亮压缩
+        brightness = 50.0 + 50.0 * powf(x, gamma);
+      }
+
+      return brightness;
+
+    filters:
+      - delta: 1.5        # <1.5% 不更新（非常稳）
+      - clamp:
+          min_value: 0
+          max_value: 100
+
+
+  
+  - platform: aht10
+    variant: AHT20 
+    i2c_id: bus_a
+    update_interval: 30s  # 不建议太快，如需实时可设为30s，但不低于10s
+
+    # 温度
+    temperature:
+      id: aht20_temperature
+      name: "Living Room Temperature"
+      device_class: temperature
+      unit_of_measurement: "°C"
+
+      accuracy_decimals: 2
+      filters:
+        - median       # 取中位值降低波动
+        # - lambda: return x + 10.2;  # 温度偏低补偿 +10.2°C
+          
+      
+      on_value:
+        then:
+          - lambda: |-
+              ESP_LOGI("AHT20", "当前温度: %.2f °C", x);
+
+    # 湿度
+    humidity:
+      id: aht20_humidity
+      name: "Living Room Humidity"
+      device_class: humidity
+      unit_of_measurement: "%"
+      accuracy_decimals: 2
+      filters:
+        - median 
+        # - offset: 30.5
+            
+        #- lambda: return x +30;  # 湿度偏高修正30%
+      on_value:
+        then:
+          - lambda: |-
+              ESP_LOGI("AHT20", "当前湿度: %.2f %%", x);
+              
+              
+              
+  - platform: template
+    name: "功能组合 Function Count"
+    id: s_func_count
+    unit_of_measurement: "items"
+    accuracy_decimals: 0
+              
+# ---------------- Binary Sensors ----------------
+binary_sensor:
+  - platform: ld2410
+    has_target:
+      name: "Presence"
+    has_moving_target:
+      name: "Moving Target"
+    has_still_target:
+      name: "Still Target"
+  #LD2410输入引脚，外部下拉
+  - platform: gpio
+    id: input_gpio5
+    pin:
+      number: GPIO5
+     # mode: INPUT_PULLDOWN    # 外部有上拉/下拉也可以用 INPUT
+    name: "Input gpio5"
+    filters:
+      - delayed_on: 200ms
+      - delayed_off: 200ms
+
+    # on_press:
+    #   - logger.log: "gpio5 HIGH → GPIO22 = ON"
+    #   # - switch.turn_on: gpio22_out
+    #   # - lambda: |-
+    #   #     id(gpio22_state) = true;
+
+    # on_release:
+    #   - logger.log: "gpio5 LOW → GPIO22 = OFF"
+    #   # - switch.turn_off: gpio22_out
+    #   # - lambda: |-
+    #   #     id(gpio22_state) = false;
+ 
+ 
+  #镜前灯开关检测输入脚，外部下拉
+
+  - platform: gpio
+    id: input_gpio
+    pin:
+      number: GPIO34
+      mode: INPUT
+    name: "镜前灯input"
+    internal: True
+   # interrupt_type: FALLING
+    filters:
+      - delayed_on:  20ms
+      - delayed_off: 20ms
+    on_press:
+      - logger.log: "GPIO34 HIGH → turn OFF GPIO22"
+      - lambda: |-
+          // ===== 将 cond_flags 的第5位置 0   第4位置0 =====
+          id(cond_flags) &= ~ BIT_DRYI;
+          id(cond_flags) &= ~ BIT_HUMM;
+          id(cond_flags) |= BIT_MOFF;
+          ESP_LOGI("COND", "Manual OFF → BIT_MOFF set, flags=0x%02X", id(cond_flags));          
+      - switch.turn_off: gpio22_out
+      - script.execute: turn_off_all_light
+      - script.execute: turn_off_all_fan_function     
+      
+    on_release:
+      - logger.log: "GPIO34 LOW → turn ON GPIO22"
+      - lambda: |-
+          // ===== 将 cond_flags 的第5位置 0   第4位置1 =====
+          id(cond_flags) &= ~ BIT_DRYI;
+          id(cond_flags) |= BIT_HUMM;
+      - switch.turn_on: gpio22_out
+      - script.stop: turn_off_all_light
+      - script.stop: turn_off_all_fan_function
+
+  - platform: template
+    name: "FAN_STATUS"
+    id: fan_status
+
+  - platform: template
+    name: "照明 Light"
+    id: bs_light
+
+  - platform: template
+    name: "小夜灯 Night"
+    id: bs_night
+
+  - platform: template
+    name: "换气 Vent"
+    id: bs_vent
+
+  - platform: template
+    name: "沐浴 Bath"
+    id: bs_bath
+
+  - platform: template
+    name: "吹风 Blow"
+    id: bs_blow
+
+  - platform: template
+    name: "风暖10 Warm10"
+    id: bs_warm_10
+
+  - platform: template
+    name: "风暖20 Warm20"
+    id: bs_warm_20
+
+  - platform: template
+    name: "干燥 Dry"
+    id: bs_dry
+
+  - platform: template
+    name: "摆风 Swing"
+    id: bs_swing
+
+
+# ===========================
+#      多路输出定义
+# ===========================
+
+output:
+
+
+  
+  - platform: gpio
+    id: gpio12_out
+    pin:
+      number: GPIO12
+      inverted: false
+
+
+
+
+# ---------------- Buttons ----------------
+button:
+  - platform: ld2410
+
+    # factory_reset:
+    #   name: Factory reset
+    restart:
+      name: Restart
+    # query_params:
+    #   name: Query params
+    #   id: ld2410_query 
+    #   internal: true     # ← 不同步到 HA，只在 Web Page 可调 
+# ---------------- Switches ----------------
+
+
+  - platform: template
+    id: chuifeng
+    name: "吹风 Blow SET"
+    on_press:
+      - script.execute: send_waveform_chuifeng
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji   
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji    
+      
+      
+      
+  - platform: template
+    id: daiji
+    name: "心跳 Beat GET"
+    on_press:
+      - script.execute: send_waveform_daiji
+
+  - platform: template
+    id: guanji
+    name: "关机 TurnOff SET"
+    on_press:
+      - script.execute: send_waveform_guanji  
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji   
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji    
+
+  - platform: template
+    id: huanqi
+    name: "换气 Vent SET"
+    on_press:
+      - script.execute: send_waveform_huanqi
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji   
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji          
+  - platform: template
+    id: muyu
+    name: "沐浴 Bath/干燥 Dry -SET"
+    on_press:
+      - script.execute: send_waveform_muyu
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji   
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji     
+
+  - platform: template
+    id: nuanfeng
+    name: "风暖10 Warm10/风暖20 Warm20 SET"
+    on_press:
+      - script.execute: send_waveform_nuanfeng
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji   
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji   
+
+  - platform: template
+    id: xiaoyedeng
+    name: "小夜灯 Night SET"
+    on_press:
+      - script.execute: send_waveform_xiaoyedeng
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji   
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji          
+  - platform: template
+    id: zhaoming
+    name: "照明 Light SET"
+  
+    on_press:     
+      - script.execute: send_waveform_zhaoming  
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji   
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji                      
+  - platform: template
+    id: baifeng
+    name: "摆风 Swing SET"
+    on_press:
+      - script.execute: send_waveform_baifeng  
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji   
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji          
+
+  - platform: template
+    name: "关闭所有设备"
+    id: btn_turn_off_all
+    on_press:
+      then:
+        - script.execute: turn_off_all_light
+        - script.execute: turn_off_all_fan_function
+  # 手动重启 ESP32 的开关
+switch:
+  - platform: restart
+    name: ESP32 Restart
+    id: restart_switch
+  - platform: ld2410
+    engineering_mode:
+      name: Engineering mode
+      id: engineering_mode_switch   # ← 添加 id      
+      
+    bluetooth:
+      name: Control bluetooth
+      internal: true     # ← 不同步到 HA，只在 Web Page 可调 
+
+
+  - platform: template
+    name: "重启面板-chongqi"
+    turn_on_action:
+      - script.execute: send_waveform_chongqi
+
+
+  - platform: gpio
+    name: "GPIO22 Control-镜前灯开关"
+    id: gpio22_out
+    pin: GPIO22
+    restore_mode: RESTORE_DEFAULT_OFF
+
+
+  - platform: gpio
+    name: "GPIO21 Control-LD2410开关"
+    id: gpio21_out
+    pin: GPIO21
+    restore_mode: RESTORE_DEFAULT_OFF 
+
+
+
+# ---------------- Number ----------------
+number:
+  # - platform: ld2410
+  #   timeout:
+  #     name: Timeout
+  #     internal: true     # ← 不同步到 HA，只在 Web Page 可调        
+  #   light_threshold:
+  #     name: Light threshold
+  #     internal: true     # ← 不同步到 HA，只在 Web Page 可调  
+  #   max_move_distance_gate:
+  #     name: Max move distance gate
+  #     internal: true     # ← 不同步到 HA，只在 Web Page 可调  
+  #   max_still_distance_gate:
+  #     name: Max still distance gate
+  #     internal: true     # ← 不同步到 HA，只在 Web Page 可调  
+
+  - platform: template
+    name: "区间开始时间(分钟)START"
+    id: start_minute
+    min_value: 0
+    max_value: 1439
+    step: 1
+    restore_value: true
+    initial_value: 450  # 07:30
+    optimistic: true
+
+  - platform: template
+    name: "亮度门限(LIGHT)"
+    id: light_limit
+    min_value: 0
+    max_value: 100
+    step: 1
+    restore_value: true
+    optimistic: true
+    initial_value: 40   # 初始值
+
+  - platform: template
+    name: "湿度门限(humm)"
+    id: aht20_humidity_limit
+    min_value: 0
+    max_value: 100
+    step: 1
+    restore_value: true
+    initial_value: 40   # 初始值    
+    optimistic: true
+  - platform: template
+    name: "区间结束时间(分钟)STOP"  
+    id: end_minute
+    min_value: 0
+    max_value: 1439
+    step: 1
+    restore_value: true
+    initial_value: 1320    # 22:00
+    optimistic: true
+
+text_sensor:
+
+ 
+  - platform: ld2410
+    version:
+      name: Firmware version
+      id: ld2410_version
+      
+    mac_address:
+      name: MAC address
+      id: ld2410_mac
+
+
+  - platform: template
+    name: "当前时间TIME"
+    update_interval: 1s
+    lambda: |-
+      auto now = id(my_time).now();
+      if (!now.is_valid()) return std::string("未同步");
+
+      char buf[20];
+      snprintf(buf, sizeof(buf), "%02d:%02d:%02d",
+               now.hour, now.minute, now.second);
+      return std::string(buf);
+
+
+ 
+
+  - platform: template
+    id: cond_flags_bin
+    name: "条件状态位(cond_flags)"
+    update_interval: 1s
+    lambda: |-
+      char buf[9];   // 8 bit + '\0'
+      uint8_t v = id(cond_flags);
+
+      for (int i = 7; i >= 0; i--) {
+        buf[7 - i] = (v & (1 << i)) ? '1' : '0';
+      }
+      buf[8] = '\0';
+
+      return std::string(buf);
+
+
+# ---------------- Select ----------------
+select:
+  - platform: ld2410
+    distance_resolution:
+      name: "Distance Resolution"
+      internal: true     # ← 不同步到 HA，只在 Web Page 可调         
+    baud_rate:
+      name: "Baud Rate"
+      id: "Baud_Rate"
+      internal: true     # ← 不同步到 HA，只在 Web Page 可调         
+      on_value:
+        then:
+          - delay: 2s
+        
+          - lambda: |-           
+              //自动同步刷新网页设置的串口波特率，匹配设备和ESP32
+              static std::string last_level = "";
+              std::string level = id(Baud_Rate).state;
+              uint32_t baud = std::stoul(level);  // 将字符串转换为整数          
+              if (level != last_level) {      
+              ESP_LOGI("LD2410", "当前 Baud_Rate = %s", level.c_str());
+              ESP_LOGI("uart", "Setting UART baud rate to %lu", baud);
+              id(uart_ld2410).set_baud_rate(baud);                   
+              id(uart_ld2410).load_settings();        
+              last_level = level;         
+              id(Baud_Rate).publish_state(level);   // ⭐ 强制同步 Web UI 和内部状态         
+              
+              
+              }  //自动同步刷新网页设置的串口波特率，匹配设备和ESP32
+    light_function:
+      name: "Light Function"
+      internal: true     # ← 不同步到 HA，只在 Web Page 可调   
+
+    out_pin_level:
+      name: "Out Pin Level"
+      internal: true     # ← 不同步到 HA，只在 Web Page 可调         
+interval:
+
+
+
+      
+
+# 可选 – 监控传感器是否异常
+
+  - interval: 5min
+    then:
+      - lambda: |-
+          if (id(aht20_temperature).state < -20 || id(aht20_temperature).state > 80) {
+            ESP_LOGW("AHT20", "⚠ 温度超出合理范围，可能传感器异常");
+          }
+
+  - interval: 1s
+    then:
+      - lambda: |-
+
+          auto now = id(my_time).now();
+          if (!now.is_valid()) return;
+
+          int now_min = now.hour * 60 + now.minute;
+          int start = (int) id(start_minute).state;
+          int end   = (int) id(end_minute).state;
+
+          bool in_range = false;
+
+          if (start < end) {
+            in_range = (now_min >= start && now_min < end);
+          } else {
+            in_range = (now_min >= start || now_min < end);
+          }
+
+          if (in_range) {     
+            ESP_LOGI("TIME", "当前时间在区间时间段内");
+            id(cond_flags) |= BIT_TIME;   // 置位      
+          }else{ 
+            id(cond_flags) &= ~BIT_TIME;  // 清位     
+          }
+          if (id(env_brightness).state <= id(light_limit).state){
+            ESP_LOGI("BRIGHT","当前亮度在区间时间段内");
+            id(cond_flags) |= BIT_DARK;
+          }else{
+            id(cond_flags) &= ~BIT_DARK;
+          }
+          if (id(fan_status).state > 0){
+                            
+            ESP_LOGI("FAN","风机开启，人在可信度低");
+            id(cond_flags) |= BIT_FUNC;
+          }else{
+            id(cond_flags) &= ~BIT_FUNC;
+          }
+          if (id(input_gpio5).state &&id(gpio21_out).state ){
+                            
+            ESP_LOGI("PRE","当前人在传感器检测有人");
+            id(cond_flags) |= BIT_PRES;
+          }else{
+            id(cond_flags) &= ~BIT_PRES;
+            id(cond_flags) &= ~BIT_MOFF;
+          }
+
+          if (id(aht20_humidity).state >= id(aht20_humidity_limit).state){
+            ESP_LOGI("HUMM","当前环境湿度超过门限值，建议开启通风功能");
+            id(cond_flags) |= BIT_HUMM;
+          }else{
+            id(cond_flags) &= ~BIT_HUMM;
+          }
+
+
+
+            uint8_t f = id(cond_flags);
+
+              // ===== 人工关闭锁生效，自动化全部禁止 =====
+              if (f & BIT_MOFF) {
+                ESP_LOGD("COND", "Manual OFF lock active, skip automation");
+                return;
+              }      
+
+            // ===== 分支 1：X1011 =====
+            if ((f & MASK_X1011) == VAL_X1011) {
+              ESP_LOGI("COND", "match X1011 → script_x1011--打开照明");
+              // ===== 将 cond_flags 的第5位置 0   第4位置1 =====
+              id(cond_flags) &= ~ BIT_DRYI;
+              id(cond_flags) |= BIT_HUMM;
+              // 停止两个关灯脚本
+              id(turn_off_all_light).stop();
+              id(turn_off_all_fan_function).stop();
+              // 打开镜前灯开关
+              id(gpio22_out).turn_on();             
+            }
+            // ===== 分支 2：010XXX =====
+            else if ((f & MASK_010XXX) == VAL_010XXX) {
+              ESP_LOGI("COND", "match 010XXX → script_010xxx开始干燥");
+              id(turn_on_todry).execute();
+            }
+            // ===== 分支 3：X0XXX =====
+            else if ((f & MASK_X0XXX) == VAL_X0XXX && id(gpio21_out).state && id(gpio22_out).state) {
+              ESP_LOGI("COND", "match X0XXX → script_x0xxx关闭照明");
+              id(turn_off_all_light).execute();
+            }
+            else {
+              ESP_LOGD("COND", "no pattern match");
+            }
+
+
+  - interval: 1h
+    then:
+      - switch.turn_on: engineering_mode_switch           
+          
+# =========================
+# 直接声明 GPIO
+# =========================
+# =================================================
+# RMT 输出（硬件级脉冲，WiFi 不影响）
+# =================================================
+remote_transmitter:
+  pin: 
+    number: GPIO18
+    inverted: False   #输出与电压状态，是否反向
+  carrier_duty_percent: 50%
+ # clock_resolution: 1000000
+  eot_level: False   #默认IDLE电平状态
+# ---------------- Globals ----------------
+globals:
+
+
+  - id: TODO_CNT   # <<< 记录脚本执行次数
+    type: uint8_t
+    restore_value: false
+    initial_value: '0'
+
+
+  - id: gpio22_state
+    type: bool
+    restore_value: no
+    initial_value: "false"
+
+  - id: cond_flags   # <<< 记录功能状态，方便后面自动开灯使能
+    type: uint8_t
+    restore_value: false
+    initial_value: '0'
+
+
+  - id: FRAME_SEQ_ID        # <<< 新增：收到的帧序号（单调递增）
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'  
+  - id: TABLE_WAVEFORM
+    type: std::vector<std::vector<int>>
+    restore_value: no
+    initial_value: 'std::vector<std::vector<int>>{}'
+  - id: WAVEFORM_COUNT
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: last_frame_start_us
+    type: int64_t
+    restore_value: no
+    initial_value: '0'
+  - id: REFERENCE_WAVEFORMS
+    type: std::vector<std::vector<int>>
+    restore_value: no
+    initial_value: |
+      std::vector<std::vector<int>>{
+
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-4,2},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-5,1,-4,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-5,1,-1,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-2,1,-1,1,-2,1,-4,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-2,1,-1,1,-2,1,-1,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-2,1,-1,1,-1,2,-4},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-2,1,-2,1,-1,1,-4,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-2,1,-2,1,-1,1,-1,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-2,1,-2,3},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-2,2,-2,2},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-2,2,-3,1,-4,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-2,2,-3,1,-1,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-3,1,-2,2},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-3,1,-3,1,-4,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-3,1,-3,1,-1,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-4,1,-1,2},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-4,1,-2,1,-4,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-4,1,-2,1,-1,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-5,1,-1,1,-4,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-5,1,-1,1,-1,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-5,3},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-6,2},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-7,1,-1,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-1,1,-7,1,-3,2},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-3,1,-4,2},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-3,1,-5,1,-1,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-3,1,-5,1,-4,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-4,1,-1,1,-1,2},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-4,1,-1,1,-2,1,-4,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-4,1,-1,1,-2,1,-1,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-4,1,-2,1,-1,1,-4,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-4,1,-2,1,-1,1,-1,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-4,1,-2,3,-4,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-4,1,-3,2},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-4,1,-4,1,-1,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-4,1,-4,1,-4,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-4,2,-2,2},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-4,2,-3,1,-1,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-4,2,-3,1,-4,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-5,1,-2,2},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-5,1,-3,1,-1,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-5,1,-3,1,-4,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-6,1,-1,2},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-6,1,-2,1,-1,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-6,1,-2,1,-4,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-7,1,-1,1,-1,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-7,1,-1,1,-4,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-7,3,-4,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-8,2,-3,2},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-8,2,-4,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-9,1,-1,1,-1,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-9,1,-1,1},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-9,1,-3,2},
+      {-1,1,-1,1,-1,1,-1,1,-1,1,-9,1,-4,1}
+
+
+      }
+  - id: REFERENCE_STATUS
+    type: std::vector<std::vector<int>>
+    restore_value: no
+    initial_value: |
+      std::vector<std::vector<int>>{
+
+      {1,0,0,0,0,0,0,1,1,3},
+      {0,0,0,0,0,0,0,1,1,2},
+      {0,1,0,0,0,0,0,1,1,3},
+      {0,0,1,0,0,0,1,0,1,3},
+      {0,1,1,0,0,0,1,0,1,4},
+      {1,0,1,0,0,0,1,0,1,4},
+      {0,0,1,0,0,1,0,0,1,3},
+      {0,1,1,0,0,1,0,0,1,4},
+      {1,0,1,0,0,1,0,0,1,4},
+      {1,0,1,0,1,0,0,0,1,4},
+      {0,0,1,0,1,0,0,0,1,3},
+      {0,1,1,0,1,0,0,0,1,4},
+      {1,0,0,0,1,0,0,0,1,3},
+      {0,0,0,0,1,0,0,0,1,2},
+      {0,1,0,0,1,0,0,0,1,3},
+      {1,0,0,0,0,0,1,0,1,3},
+      {0,0,0,0,0,0,1,0,1,2},
+      {0,1,0,0,0,0,1,0,1,3},
+      {0,0,0,0,0,1,0,0,1,2},
+      {0,1,0,0,0,1,0,0,1,3},
+      {1,0,0,0,0,1,0,0,1,3},
+      {1,0,0,1,0,0,0,0,1,3},
+      {0,1,0,1,0,0,0,0,1,3},
+      {0,0,0,1,0,0,0,0,1,2},
+      {1,0,0,0,0,0,0,1,0,2},
+      {0,1,0,0,0,0,0,1,0,2},
+      {0,0,0,0,0,0,0,1,0,1},
+      {1,0,1,0,0,0,1,0,0,3},
+      {0,0,1,0,0,0,1,0,0,2},
+      {0,1,1,0,0,0,1,0,0,3},
+      {0,0,1,0,0,1,0,0,0,2},
+      {0,1,1,0,0,1,0,0,0,3},
+      {1,0,1,0,0,1,0,0,0,3},
+      {1,0,1,0,0,0,0,0,0,2},
+      {0,1,1,0,0,0,0,0,0,2},
+      {0,0,1,0,0,0,0,0,0,1},
+      {1,0,1,0,1,0,0,0,0,3},
+      {0,1,1,0,1,0,0,0,0,3},
+      {0,0,1,0,1,0,0,0,0,2},
+      {1,0,0,0,1,0,0,0,0,2},
+      {0,1,0,0,1,0,0,0,0,2},
+      {0,0,0,0,1,0,0,0,0,1},
+      {1,0,0,0,0,0,1,0,0,2},
+      {0,1,0,0,0,0,1,0,0,2},
+      {0,0,0,0,0,0,1,0,0,1},
+      {0,1,0,0,0,1,0,0,0,2},
+      {0,0,0,0,0,1,0,0,0,1},
+      {1,0,0,0,0,1,0,0,0,2},
+      {1,0,0,1,0,0,0,0,0,2},
+      {1,0,0,0,0,0,0,0,0,1},
+      {0,1,0,1,0,0,0,0,0,2},
+      {0,1,0,0,0,0,0,0,0,1},
+      {0,0,0,1,0,0,0,0,0,1},
+      {0,0,0,0,0,0,0,0,0,0}
+
+
+      }
+
+   # ===== 功能标签 =====
+  - id: STATUS_LABELS
+    type: std::vector<std::string>
+    restore_value: no
+    initial_value: |
+      std::vector<std::string>{
+        "照明", "小夜灯", "换气", "沐浴", "吹风", "风暖10", "风暖20", "干燥", "摆风", "功能组合"
+      }     
+  - id: last_matched_id
+    type: int
+    restore_value: no
+    initial_value: '-1'
+  - id: match_counter
+    type: int
+    restore_value: no
+    initial_value: '0'
+
+  - id: rx_enabled
+    type: bool
+    restore_value: no
+    initial_value: "true"
+
+remote_receiver:
+  pin:
+    number: GPIO19
+    inverted: False
+  dump: raw
+  tolerance: 20%
+  idle: 40ms
+  buffer_size: 4kb
+  ## ===== on_raw Lambda（优化 + 帧序号版）=====
+  on_raw:
+    then:
+      - lambda: |-
+
+          // ==================================================
+          // RX 全局使能开关（用于关机/发射期间屏蔽接收）
+          // ==================================================
+          if (!id(rx_enabled)) {
+            ESP_LOGD("RMT", "RX disabled, raw frame ignored");
+            return;
+          }
+
+          // ============================================================
+          // 【修改备注 1】
+          // 强制引用全局参考表，防止在未使用时报“unused”或被优化掉
+          // ============================================================
+          volatile size_t _ref_sz = id(REFERENCE_WAVEFORMS).size();
+
+          // ============================================================
+          // 【修改备注 2】
+          // 帧序号累加：每收到一帧，FRAME_SEQ_ID +1
+          // ============================================================
+          id(FRAME_SEQ_ID)++;
+
+          // ============================================================
+          // 【修改备注 3】
+          // 记录当前帧时间，用于分析帧间隔（协议时序）
+          // ============================================================
+          int64_t now_us = esp_timer_get_time();
+          id(WAVEFORM_COUNT)++;
+
+          int64_t delta_ms = 0;
+          if (id(last_frame_start_us) != 0) {
+            delta_ms = (now_us - id(last_frame_start_us)) / 1000;
+          }
+          id(last_frame_start_us) = now_us;
+
+          ESP_LOGI("WAVE", "FRAME #%lu, delta=%lld ms",
+                  id(FRAME_SEQ_ID), delta_ms);
+
+          // ============================================================
+          // 【修改备注 4】
+          // 原始脉宽 → T 单位量化
+          // 规则：210us ≈ 1T，符号保留正负
+          // ============================================================
+          std::vector<int> full_waveform;
+          full_waveform.reserve(x.size());
+
+          for (size_t i = 0; i < x.size(); i++) {
+            int sign  = (x[i] >= 0) ? 1 : -1;
+            int units = (abs(x[i]) + 105) / 210; // 四舍五入到 1T
+            full_waveform.push_back(sign * units);
+          }
+
+          // ============================================================
+          // 【修改备注 5】
+          // 前 20 位作为帧头（暂不参与匹配，仅用于观察）
+          // ============================================================
+          std::vector<int> prefix_waveform;
+          prefix_waveform.reserve(20);
+
+          for (size_t i = 0; i < full_waveform.size() && i < 20; i++) {
+            prefix_waveform.push_back(full_waveform[i]);
+          }
+
+          // ============================================================
+          // 【修改备注 6】
+          // 第 21 位开始作为“匹配波形”
+          // ============================================================
+          std::vector<int> quantized;
+          if (full_waveform.size() > 20) {
+            quantized.reserve(full_waveform.size() - 20);
+            for (size_t i = 20; i < full_waveform.size(); i++) {
+              quantized.push_back(full_waveform[i]);
+            }
+          }
+
+          // ============================================================
+          // 【修改备注 7】
+          // 日志统一风格，全部带帧序号，方便离线分析
+          // ============================================================
+          {
+            char buf[1024]; int len = 0;
+            for (auto v : full_waveform)
+              len += snprintf(buf + len, sizeof(buf) - len, "%d,", v);
+            ESP_LOGI("WAVE", "[%lu] FULL (%d): %s",
+                    id(FRAME_SEQ_ID), (int)full_waveform.size(), buf);
+          }
+
+          {
+            char buf[512]; int len = 0;
+            for (auto v : prefix_waveform)
+              len += snprintf(buf + len, sizeof(buf) - len, "%d,", v);
+            ESP_LOGI("WAVE", "[%lu] HEAD (%d): %s",
+                    id(FRAME_SEQ_ID), (int)prefix_waveform.size(), buf);
+          }
+
+          {
+            char buf[512]; int len = 0;
+            for (auto v : quantized)
+              len += snprintf(buf + len, sizeof(buf) - len, "%d,", v);
+            ESP_LOGI("WAVE", "[%lu] RX MATCH (%d): %s",
+                    id(FRAME_SEQ_ID), (int)quantized.size(), buf);
+          }
+
+          // ============================================================
+          // 【修改备注 8】
+          // 保存当前帧的匹配波形（供你后续动态建表 / 回放）
+          // ============================================================
+          id(TABLE_WAVEFORM).clear();
+          id(TABLE_WAVEFORM).push_back(quantized);
+
+          // ============================================================
+          // 【修改备注 9】
+          // 匹配逻辑：
+          //  - 优先从上次成功的 ID 开始
+          //  - 完全相等匹配（不引入容差）
+          // ============================================================
+          int start_id = 0;
+          if (id(last_matched_id) >= 0) {
+            start_id = id(last_matched_id);
+          }
+
+          bool matched_this_round = false;
+
+          for (size_t ref_id = start_id;
+              ref_id < id(REFERENCE_WAVEFORMS).size();
+              ref_id++) {
+
+            const auto &ref_wave = id(REFERENCE_WAVEFORMS)[ref_id];
+
+            // ============================================================
+            // 【修改备注】
+            // 典型阵匹配规则：
+            // - ref_wave 是“核心特征段”
+            // - quantized 允许更长（后面是状态/尾部/校验）
+            // - 只要求 quantized 以前缀形式包含 ref_wave
+            // ============================================================
+
+            // 收到的帧比典型阵还短，必然不可能匹配
+            if (quantized.size() < ref_wave.size()) continue;
+
+            bool ok = true;
+
+            // 只比较 ref_wave 的长度
+            for (size_t i = 0; i < ref_wave.size(); i++) {
+              if (quantized[i] != ref_wave[i]) {
+              ok = false;
+              break;
+              }
+            }
+
+            if (!ok) continue;
+
+            // ============================================================
+            // 【修改备注 10】
+            // 匹配成功处理（输出层重构）
+            // ============================================================
+            matched_this_round = true;
+
+            if (id(last_matched_id) == (int)ref_id) {
+              id(match_counter)++;
+            } else {
+              id(match_counter) = 1;
+              id(last_matched_id) = ref_id;
+            }
+
+            if (id(match_counter) >= 3) {
+              const auto &status = id(REFERENCE_STATUS)[ref_id];
+
+              // ===== 原始状态 =====
+              char s_buf[256]; int s_len = 0;
+              for (auto v : status)
+                s_len += snprintf(s_buf + s_len,
+                                  sizeof(s_buf) - s_len,
+                                  "%d,", v);
+
+              ESP_LOGI("WAVE",
+                      "[%lu] MATCHED ID=%d, RAW STATUS: %s",
+                      id(FRAME_SEQ_ID), ref_id, s_buf);
+
+              // ===== Web UI =====
+              id(bs_light).publish_state(status[0]);
+              id(bs_night).publish_state(status[1]);
+              id(bs_vent).publish_state(status[2]);
+              id(bs_bath).publish_state(status[3]);
+              id(bs_blow).publish_state(status[4]);
+              id(bs_warm_10).publish_state(status[5]);
+              id(bs_warm_20).publish_state(status[6]);
+              id(bs_dry).publish_state(status[7]);
+              id(bs_swing).publish_state(status[8]);
+              id(fan_status).publish_state(status[2]||status[3]||status[4]||status[5]||status[6]||status[7]);
+              // ===== 功能组合统计 =====
+              int func_count = 0;
+              for (size_t i = 0; i < 9 && i < status.size(); i++)
+                if (status[i]) func_count++;
+
+              id(s_func_count).publish_state(func_count);
+
+              // ===== 语义化日志 =====
+              const char *labels[] = {
+                "照明 Light",
+                "小夜灯 Night",
+                "换气 Vent",
+                "沐浴 Bath",
+                "吹风 Blow",
+                "风暖10 Warm10",
+                "风暖20 Warm20",
+                "干燥 Dry",
+                "摆风 Swing"
+              };
+
+              for (size_t i = 0; i < 9 && i < status.size(); i++) {
+                ESP_LOGI("WAVE", "%-12s:|||||| %-22s",
+                        labels[i],
+                        status[i] ? "ON" : "OFF");
+              }
+
+              ESP_LOGI("WAVE", "功能组合 Function Count: %d", func_count);
+            } else {
+              ESP_LOGI("WAVE",
+                      "[%lu] ID=%d matched %d times (waiting 3)",
+                      id(FRAME_SEQ_ID), ref_id, id(match_counter));
+            }
+
+            break;   // <<< 必须：跳出 ref_id for
+            }        // <<< 必须：结束 if (ok)
+
+
+
+          // ============================================================
+          // 【修改备注 11】
+          // 本帧未匹配任何典型阵：
+          // - 重置 last_matched_id 为 0（下帧从头扫描）
+          // - 清空连续匹配计数
+          // ============================================================
+          if (!matched_this_round) {
+            ESP_LOGI("WAVE",
+                    "[%lu] NO MATCH, reset last_matched_id -> 0",
+                    id(FRAME_SEQ_ID));
+
+            id(last_matched_id) = 0;
+            id(match_counter)  = 0;
+
+            // ===== 强制重置所有功能状态 =====
+            id(bs_light).publish_state(false);
+            id(bs_night).publish_state(false);
+            id(bs_vent).publish_state(false);
+            id(bs_bath).publish_state(false);
+            id(bs_blow).publish_state(false);
+            id(bs_warm_10).publish_state(false);
+            id(bs_warm_20).publish_state(false);
+            id(bs_dry).publish_state(false);
+            id(bs_swing).publish_state(false);
+            id(fan_status).publish_state(false);
+
+            // ===== 功能组合统计清零 =====
+            //id(s_func_count).publish_state(0);
+          }
+
+# =================================================
+# 波形发送脚本
+# =================================================
+script:
+  - id: send_waveform_daiji
+    mode: restart
+    then:
+      - remote_transmitter.transmit_raw:
+          code: [   
+            #默认idle 上拉高电平
+            # 波形开始，低电平先开始    
+          420,#面板心跳波形-2电平状态:低
+          -210,#面板心跳波形1电平状态:高
+          210,#面板心跳波形-1电平状态:低
+          -210,#面板心跳波形1电平状态:高
+          210,#面板心跳波形-1电平状态:低
+          -210,#面板心跳波形1电平状态:高
+          210,#面板心跳波形-1电平状态:低
+          -420,#面板心跳波形2电平状态:高
+          1890,#面板心跳波形-9电平状态:低
+          -210,#面板心跳波形1电平状态:高
+          1890,#面板心跳波形-9电平状态:低
+          -210,#面板心跳波形1电平状态:高
+          420,#面板心跳波形-2电平状态:低
+          -420,#面板心跳波形2电平状态:高
+          210,#面板心跳波形-1电平状态:低
+          -210,#面板心跳波形1电平状态:高
+          210,#面板心跳波形-1电平状态:低
+          -210,#面板心跳波形1电平状态:高
+          210,#面板心跳波形-1电平状态:低
+            # 波形结束，默认idle 上拉高电平
+          ]
+  - id: send_waveform_guanji
+    mode: restart
+    then:
+      - remote_transmitter.transmit_raw:
+          code: [       
+            #默认idle 上拉高电平
+            # 波形开始，低电平先开始
+          420,#关机请求波形-2电平状态:低   
+          -210,#关机请求波形1电平状态:高   
+          210,#关机请求波形-1电平状态:低   
+          -210,#关机请求波形1电平状态:高   
+          210,#关机请求波形-1电平状态:低   
+          -210,#关机请求波形1电平状态:高   
+          210,#关机请求波形-1电平状态:低   
+          -420,#关机请求波形2电平状态:高   
+          1470,#关机请求波形-7电平状态:低   
+          -210,#关机请求波形1电平状态:高   
+          210,#关机请求波形-1电平状态:低   
+          -210,#关机请求波形1电平状态:高   
+          1890,#关机请求波形-9电平状态:低   
+          -210,#关机请求波形1电平状态:高   
+          420,#关机请求波形-2电平状态:低   
+          -420,#关机请求波形2电平状态:高   
+          210,#关机请求波形-1电平状态:低   
+          -210,#关机请求波形1电平状态:高   
+          630,#关机请求波形-3电平状态:低   
+            # 波形结束，默认idle 上拉高电平
+          ]
+  - id: send_waveform_huanqi
+    mode: restart
+    then:
+      - remote_transmitter.transmit_raw:
+          code: [       
+        420,#换气请求波形-2电平状态:低
+        -210,#换气请求波形1电平状态:高
+        210,#换气请求波形-1电平状态:低
+        -210,#换气请求波形1电平状态:高
+        210,#换气请求波形-1电平状态:低
+        -210,#换气请求波形1电平状态:高
+        210,#换气请求波形-1电平状态:低
+        -420,#换气请求波形2电平状态:高
+        1050,#换气请求波形-5电平状态:低
+        -210,#换气请求波形1电平状态:高
+        630,#换气请求波形-3电平状态:低
+        -210,#换气请求波形1电平状态:高
+        1890,#换气请求波形-9电平状态:低
+        -210,#换气请求波形1电平状态:高
+        420,#换气请求波形-2电平状态:低
+        -420,#换气请求波形2电平状态:高
+        630,#换气请求波形-3电平状态:低
+        -210,#换气请求波形1电平状态:高
+        210,#换气请求波形-1电平状态:低
+            # 波形结束，默认idle 上拉高电平
+          ]
+  - id: send_waveform_muyu
+    mode: restart
+    then:
+      - remote_transmitter.transmit_raw:
+          code: [       
+            #默认idle 上拉高电平
+            # 波形开始，低电平先开始
+            420,#沐浴请求波形-2电平状态:低
+            -210,#沐浴请求波形1电平状态:高
+            210,#沐浴请求波形-1电平状态:低
+            -210,#沐浴请求波形1电平状态:高
+            210,#沐浴请求波形-1电平状态:低
+            -210,#沐浴请求波形1电平状态:高
+            210,#沐浴请求波形-1电平状态:低
+            -420,#沐浴请求波形2电平状态:高
+            1680,#沐浴请求波形-8电平状态:低
+            -420,#沐浴请求波形2电平状态:高
+            1890,#沐浴请求波形-9电平状态:低
+            -210,#沐浴请求波形1电平状态:高
+            420,#沐浴请求波形-2电平状态:低
+            -420,#沐浴请求波形2电平状态:高
+            210,#沐浴请求波形-1电平状态:低
+            -210,#沐浴请求波形1电平状态:高
+            210,#沐浴请求波形-1电平状态:低
+            # 波形结束，默认idle 上拉高电平
+          ]
+  - id: send_waveform_nuanfeng
+    mode: restart
+    then:
+      - remote_transmitter.transmit_raw:
+          code: [       
+            #默认idle 上拉高电平
+            # 波形开始，低电平先开始
+            420,#暖风请求波形-2电平状态:低
+            -210,#暖风请求波形1电平状态:高
+            210,#暖风请求波形-1电平状态:低
+            -210,#暖风请求波形1电平状态:高
+            210,#暖风请求波形-1电平状态:低
+            -210,#暖风请求波形1电平状态:高
+            210,#暖风请求波形-1电平状态:低
+            -420,#暖风请求波形2电平状态:高
+            840,#暖风请求波形-4电平状态:低
+            -210,#暖风请求波形1电平状态:高
+            840,#暖风请求波形-4电平状态:低
+            -210,#暖风请求波形1电平状态:高
+            1890,#暖风请求波形-9电平状态:低
+            -210,#暖风请求波形1电平状态:高
+            420,#暖风请求波形-2电平状态:低
+            -630,#暖风请求波形3电平状态:高
+            420,#暖风请求波形-2电平状态:低
+            -210,#暖风请求波形1电平状态:高
+            210,#暖风请求波形-1电平状态:低
+            # 波形结束，默认idle 上拉高电平
+          ]
+  - id: send_waveform_xiaoyedeng
+    mode: restart
+    then:
+      - remote_transmitter.transmit_raw:
+          code: [                 
+            #默认idle 上拉高电平
+            # 波形开始，低电平先开始
+        420,#小夜灯请求波形-2电平状态:低
+        -210,#小夜灯请求波形1电平状态:高
+        210,#小夜灯请求波形-1电平状态:低
+        -210,#小夜灯请求波形1电平状态:高
+        210,#小夜灯请求波形-1电平状态:低
+        -210,#小夜灯请求波形1电平状态:高
+        210,#小夜灯请求波形-1电平状态:低
+        -420,#小夜灯请求波形2电平状态:高
+        420,#小夜灯请求波形-2电平状态:低
+        -210,#小夜灯请求波形1电平状态:高
+        1260,#小夜灯请求波形-6电平状态:低
+        -210,#小夜灯请求波形1电平状态:高
+        1890,#小夜灯请求波形-9电平状态:低
+        -210,#小夜灯请求波形1电平状态:高
+        630,#小夜灯请求波形-3电平状态:低
+        -210,#小夜灯请求波形1电平状态:高
+        210,#小夜灯请求波形-1电平状态:低
+        -210,#小夜灯请求波形1电平状态:高
+        210,#小夜灯请求波形-1电平状态:低
+        -210,#小夜灯请求波形1电平状态:高
+        210,#小夜灯请求波形-1电平状态:低
+            # 波形结束，默认idle 上拉高电平
+          ]
+  - id: send_waveform_zhaoming
+    mode: restart
+    then:
+      - remote_transmitter.transmit_raw:
+          code: [       
+            #默认idle 上拉高电平
+            # 波形开始，低电平先开始
+          420,#照明请求波形-2电平状态:低
+          -210,#照明请求波形1电平状态:高
+          210,#照明请求波形-1电平状态:低
+          -210,#照明请求波形1电平状态:高
+          210,#照明请求波形-1电平状态:低
+          -210,#照明请求波形1电平状态:高
+          210,#照明请求波形-1电平状态:低
+          -420,#照明请求波形2电平状态:高
+          210,#照明请求波形-1电平状态:低
+          -210,#照明请求波形1电平状态:高
+          1470,#照明请求波形-7电平状态:低
+          -210,#照明请求波形1电平状态:高
+          1890,#照明请求波形-9电平状态:低
+          -210,#照明请求波形1电平状态:高
+          210,#照明请求波形-1电平状态:低
+          -210,#照明请求波形1电平状态:高
+          210,#照明请求波形-1电平状态:低
+          -210,#照明请求波形1电平状态:高
+          210,#照明请求波形-1电平状态:低
+          -210,#照明请求波形1电平状态:高
+          210,#照明请求波形-1电平状态:低
+          -210,#照明请求波形1电平状态:高
+          210,#照明请求波形-1电平状态:低
+            # 波形结束，默认idle 上拉高电平
+          ]
+  - id: send_waveform_baifeng
+    mode: restart
+    then:
+      - remote_transmitter.transmit_raw:
+          code: [       
+            #默认idle 上拉高电平
+            # 波形开始，低电平先开始
+            420,#摆风请求波形-2电平状态:低
+            -210,#摆风请求波形1电平状态:高
+            210,#摆风请求波形-1电平状态:低
+            -210,#摆风请求波形1电平状态:高
+            210,#摆风请求波形-1电平状态:低
+            -210,#摆风请求波形1电平状态:高
+            210,#摆风请求波形-1电平状态:低
+            -420,#摆风请求波形2电平状态:高
+            630,#摆风请求波形-3电平状态:低
+            -210,#摆风请求波形1电平状态:高
+            1050,#摆风请求波形-5电平状态:低
+            -210,#摆风请求波形1电平状态:高
+            1890,#摆风请求波形-9电平状态:低
+            -210,#摆风请求波形1电平状态:高
+            420,#摆风请求波形-2电平状态:低
+            -210,#摆风请求波形1电平状态:高
+            420,#摆风请求波形-2电平状态:低
+            -210,#摆风请求波形1电平状态:高
+            210,#摆风请求波形-1电平状态:低
+            -210,#摆风请求波形1电平状态:高
+            210,#摆风请求波形-1电平状态:低
+            # 波形结束，默认idle 上拉高电平
+          ]
+  - id: send_waveform_chuifeng
+    mode: restart
+    then:
+      - remote_transmitter.transmit_raw:
+          code: [       
+            #默认idle 上拉高电平
+            # 波形开始，低电平先开始
+          420,#吹风请求波形-2电平状态:低
+          -210,#吹风请求波形1电平状态:高
+          210,#吹风请求波形-1电平状态:低
+          -210,#吹风请求波形1电平状态:高
+          210,#吹风请求波形-1电平状态:低
+          -210,#吹风请求波形1电平状态:高
+          210,#吹风请求波形-1电平状态:低
+          -420,#吹风请求波形2电平状态:高
+          1260,#吹风请求波形-6电平状态:低
+          -210,#吹风请求波形1电平状态:高
+          420,#吹风请求波形-2电平状态:低
+          -210,#吹风请求波形1电平状态:高
+          1890,#吹风请求波形-9电平状态:低
+          -210,#吹风请求波形1电平状态:高
+          420,#吹风请求波形-2电平状态:低
+          -420,#吹风请求波形2电平状态:高
+          210,#吹风请求波形-1电平状态:低
+          -420,#吹风请求波形2电平状态:高
+          420,#吹风请求波形-2电平状态:低
+            # 波形结束，默认idle 上拉高电平
+          ]
+  - id: send_waveform_chongqi
+    mode: restart
+    then:
+      - remote_transmitter.transmit_raw:
+          code: [       
+            #默认idle 上拉高电平
+            # 波形开始，低电平先开始
+          500000,#吹风请求波形-2电平状态:低
+            # 波形结束，默认idle 上拉高电平
+          ]          
+  # 手动重启 ESP32 的开关     
+
+
+  - id: turn_off_all_devices
+    mode: restart
+    then:
+
+      - lambda: |-
+              ESP_LOGI("SYS", "Turn off all devices → RX OFF");
+              id(rx_enabled) = false;
+              id(s_func_count).publish_state(8888);
+
+              if (id(TODO_CNT) >= 3) {
+              ESP_LOGW("TODO", "已重试 %d 次，放弃执行", id(TODO_CNT));
+              id(TODO_CNT) = 0;      
+              return;
+              }     
+      # 检查每个 sensor，如果开启则触发对应按钮
+ 
+      - if:
+
+          condition:
+            lambda: 'return id(gpio22_out).state;'
+          then:
+            - switch.turn_off: gpio22_out
+            - delay: 200ms
+      - if:
+          condition:
+            lambda: 'return id(bs_light).state;'
+          then:
+            - button.press: zhaoming
+            - delay: 200ms
+      - if:
+          condition:
+            lambda: 'return id(bs_night).state;'
+          then:
+            - button.press: xiaoyedeng
+            - delay: 200ms
+
+
+      - if:
+          condition:
+            lambda: 'return id(bs_warm_10).state ;'
+          then:
+            - button.press: nuanfeng
+            - delay: 200ms
+
+            - button.press: nuanfeng           
+            - delay: 200ms
+      - if:
+          condition:
+            lambda: 'return id(bs_warm_20).state;'
+          then:
+            - button.press: nuanfeng
+            - delay: 200ms
+
+      - if:
+          condition:
+            lambda: 'return id(bs_bath).state ;'
+          then:
+            - button.press: muyu
+            - delay: 200ms
+            - button.press: muyu           
+            - delay: 200ms
+      - if:
+          condition:
+            lambda: 'return  id(bs_dry).state;'
+          then:
+            - button.press: muyu
+            - delay: 200ms
+
+
+      - if:
+          condition:
+            lambda: 'return id(bs_vent).state;'
+          then:
+            - button.press: huanqi
+            - delay: 200ms
+
+
+
+      - if:
+          condition:
+            lambda: 'return id(bs_blow).state;'
+          then:
+            - button.press: chuifeng
+            - delay: 200ms
+
+
+      # 等待波形发送完成
+      #- delay: 5s   
+
+      - lambda: |-
+              ESP_LOGI("SYS", "Turn off all devices → RX ON");
+              id(rx_enabled) = true;       
+
+      - delay: 5s       
+      # 如果还有设备未关闭，递归调用自己
+      - if:
+          condition:
+            lambda: |-
+              return id(bs_light).state
+                  || id(bs_night).state
+                  || id(bs_vent).state
+                  || id(bs_bath).state
+                  || id(bs_dry).state
+                  || id(bs_blow).state
+                  || id(bs_warm_10).state
+                  || id(bs_warm_20).state
+                  || id(bs_swing).state
+                  || id(gpio22_out).state;
+          then:
+            - script.execute: turn_off_all_devices
+
+
+
+
+  - id: turn_off_all_light
+    mode: restart
+    then:
+
+      - lambda: |-
+              ESP_LOGI("SYS", "Turn off all light → RX OFF");
+              id(rx_enabled) = false;
+
+              if (id(TODO_CNT) >= 3) {
+                ESP_LOGW("TODO", "已重试 %d 次，放弃执行", id(TODO_CNT));
+                id(TODO_CNT) = 0;
+                id(cond_flags) &= ~BIT_DRYI;   // 清状态位
+                return;
+              }
+
+              id(TODO_CNT)++;
+              ESP_LOGI("TODO", "第 %d 次尝试执行任务", id(TODO_CNT));   
+
+      # 检查每个 sensor，如果开启则触发对应按钮
+ 
+      - if:
+
+          condition:
+            lambda: 'return id(gpio22_out).state;'
+          then:
+            - switch.turn_off: gpio22_out
+            - delay: 200ms
+      - if:
+          condition:
+            lambda: 'return id(bs_light).state;'
+          then:
+            - button.press: zhaoming
+            - delay: 200ms
+      - if:
+          condition:
+            lambda: 'return id(bs_night).state;'
+          then:
+            - button.press: xiaoyedeng
+            - delay: 200ms
+
+
+      - lambda: |-
+              ESP_LOGI("SYS", "Turn off all light → RX ON");
+              id(rx_enabled) = true;       
+      - delay: 5s       
+      # 如果还有设备未关闭，递归调用自己
+      - if:
+          condition:
+            lambda: |-
+              id(s_func_count).publish_state(6666);
+              return id(bs_light).state
+                  || id(bs_night).state 
+                  || id(gpio22_out).state;
+          then:
+            - script.execute: turn_off_all_light
+
+
+
+  - id: turn_off_all_fan_function
+    mode: restart
+    then:
+
+      - lambda: |-
+              ESP_LOGI("SYS", "Turn off all fan_function → RX OFF");
+              id(rx_enabled) = false;
+              id(s_func_count).publish_state(9999);
+
+
+              if (id(TODO_CNT) >= 3) {
+                ESP_LOGW("TODO", "已重试 %d 次，放弃执行", id(TODO_CNT));
+                id(TODO_CNT) = 0;
+                id(cond_flags) &= ~BIT_DRYI;   // 清状态位
+                return;
+              }
+
+              id(TODO_CNT)++;
+              ESP_LOGI("TODO", "第 %d 次尝试执行任务", id(TODO_CNT));                
+      # 检查每个 sensor，如果开启则触发对应按钮
+ 
+ 
+      - if:
+          condition:
+            lambda: 'return id(bs_warm_10).state ;'
+          then:
+            - button.press: nuanfeng
+            - delay: 200ms
+
+            - button.press: nuanfeng           
+            - delay: 200ms
+      - if:
+          condition:
+            lambda: 'return id(bs_warm_20).state;'
+          then:
+            - button.press: nuanfeng
+            - delay: 200ms
+
+      - if:
+          condition:
+            lambda: 'return id(bs_bath).state ;'
+          then:
+            - button.press: muyu
+            - delay: 200ms
+            - button.press: muyu           
+            - delay: 200ms
+      - if:
+          condition:
+            lambda: 'return  id(bs_dry).state;'
+          then:
+            - button.press: muyu
+            - delay: 200ms
+
+
+      - if:
+          condition:
+            lambda: 'return id(bs_vent).state;'
+          then:
+            - button.press: huanqi
+            - delay: 200ms
+
+
+
+      - if:
+          condition:
+            lambda: 'return id(bs_blow).state;'
+          then:
+            - button.press: chuifeng
+            - delay: 200ms
+
+
+      # 等待波形发送完成
+      #- delay: 5s   
+
+      - lambda: |-
+              ESP_LOGI("SYS", "Turn off all fan_function → RX ON");
+              id(rx_enabled) = true;       
+      - delay: 5s       
+      # 如果还有设备未关闭，递归调用自己
+      - if:
+          condition:
+            lambda: |-
+              return id(bs_vent).state
+                  || id(bs_bath).state
+                  || id(bs_dry).state
+                  || id(bs_blow).state
+                  || id(bs_warm_10).state
+                  || id(bs_warm_20).state
+                  || id(bs_swing).state;
+          then:
+            - script.execute: turn_off_all_fan_function
+
+
+
+  - id: turn_on_todry
+    mode: restart
+    then: 
+      - lambda: |-
+
+
+
+          // ===== 先将 cond_flags 的第5位置 1 =====
+          id(cond_flags) |= BIT_DRYI;
+
+          // ===== 判断状态 =====
+          int status = id(bs_vent).state;  // 假设 status 为整数类型
+          ESP_LOGI("TODRY", "开始干燥环境");
+          if (status == 0) {
+          id(huanqi).press();
+          }else{
+            delay(600000);   // 600S = 600*1000ms
+            id(huanqi).press();
+            delay(6000);     // 6S
+            id(chuifeng).press();
+            delay(600000);   // 600S
+            id(chuifeng).press();
+          } 
+          id(btn_turn_off_all).press();  
+          ESP_LOGI("TODRY", "状态=%d → 无操作", status);
+          // ===== 将 cond_flags 的第5位置 0 =====
+          id(cond_flags) &= ~ BIT_DRYI;
