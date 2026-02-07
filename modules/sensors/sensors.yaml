@@ -1,0 +1,175 @@
+sensor:
+
+  - platform: ld2410
+    moving_distance:
+      name: "Moving Distance"      
+    still_distance:
+      name: "Still Distance"
+    moving_energy:
+      name: "Moving Energy"
+    still_energy:
+      name: "Still Energy"
+    detection_distance:
+      name: "Detection Distance"
+      id: detection_distance_sensor   # ✅ 必须加上 ID
+
+    light:
+      name: Light
+    g0:
+      move_energy:
+        name: G0 move energy
+      still_energy:
+        name: G0 still energy
+    g1:
+      move_energy:
+        name: G1 move energy
+      still_energy:
+        name: G1 still energy
+    g2:
+      move_energy:
+        name: G2 move energy
+      still_energy:
+        name: G2 still energy
+    g3:
+      move_energy:
+        name: G3 move energy
+      still_energy:
+        name: G3 still energy
+    g4:
+      move_energy:
+        name: G4 move energy
+      still_energy:
+        name: G4 still energy
+    g5:
+      move_energy:
+        name: G5 move energy
+      still_energy:
+        name: G5 still energy
+    g6:
+      move_energy:
+        name: G6 move energy
+      still_energy:
+        name: G6 still energy
+    g7:
+      move_energy:
+        name: G7 move energy
+      still_energy:
+        name: G7 still energy
+    g8:
+      move_energy:
+        name: G8 move energy
+      still_energy:
+        name: G8 still energy      
+
+
+  # =========================
+  # 原始 ADC
+  # =========================
+  - platform: adc
+    pin: GPIO35
+    id: ldr_adc
+    attenuation: 12db
+    update_interval: 50ms
+    filters:
+      # 去瞬态毛刺
+      - sliding_window_moving_average:
+          window_size: 15
+          send_every: 5
+      # 平滑变化
+      - exponential_moving_average:
+          alpha: 0.2
+
+# =========================
+# 亮度百分比（分段曲线映射）
+# =========================
+  - platform: template
+    name: "环境亮度"
+    id: env_brightness        # ← 一定要有
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    update_interval: 1s
+    lambda: |-
+      float v = id(ldr_adc).state;
+
+      // 边界保护
+      if (v <= 0.14) return 0.0f;
+      if (v >= 3.12)  return 100.0f;
+
+      float brightness = 0.0f;
+
+      // =========================
+      // 低亮区：0.14V ~ 1.7V → 0% ~ 50%
+      // =========================
+      if (v <= 1.7) {
+        float x = (v - 0.14) / (1.7 - 0.14);   // 归一化 0~1
+        float gamma = 0.6;                   // <1：暗部更灵敏
+        brightness = 50.0 * powf(x, gamma);
+      }
+      // =========================
+      // 高亮区：1.7V ~ 3.3V → 50% ~ 100%
+      // =========================
+      else {
+        float x = (v - 1.7) / (3.12 - 1.7);    // 归一化 0~1
+        float gamma = 1.8;                   // >1：高亮压缩
+        brightness = 50.0 + 50.0 * powf(x, gamma);
+      }
+
+      return brightness;
+
+    filters:
+      - delta: 1.5        # <1.5% 不更新（非常稳）
+      - clamp:
+          min_value: 0
+          max_value: 100
+
+
+  
+  - platform: aht10
+    variant: AHT20 
+    i2c_id: bus_a
+    update_interval: 30s  # 不建议太快，如需实时可设为30s，但不低于10s
+
+    # 温度
+    temperature:
+      id: aht20_temperature
+      name: "Living Room Temperature"
+      device_class: temperature
+      unit_of_measurement: "°C"
+
+      accuracy_decimals: 2
+      filters:
+        - median       # 取中位值降低波动
+        # - lambda: return x + 10.2;  # 温度偏低补偿 +10.2°C
+          
+      
+      on_value:
+        then:
+          - lambda: |-
+              ESP_LOGI("AHT20", "当前温度: %.2f °C", x);
+
+    # 湿度
+    humidity:
+      id: aht20_humidity
+      name: "Living Room Humidity"
+      device_class: humidity
+      unit_of_measurement: "%"
+      accuracy_decimals: 2
+      filters:
+        - median 
+        # - offset: 30.5
+            
+        #- lambda: return x +30;  # 湿度偏高修正30%
+      on_value:
+        then:
+          - lambda: |-
+              ESP_LOGI("AHT20", "当前湿度: %.2f %%", x);
+              
+              
+              
+  - platform: template
+    name: "功能组合 Function Count"
+    id: s_func_count
+    unit_of_measurement: "items"
+    accuracy_decimals: 0
+              
+# ---------------- Binary Sensors ----------------

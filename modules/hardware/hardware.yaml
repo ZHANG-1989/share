@@ -1,0 +1,33 @@
+uart:
+  - id: uart_ld2410
+    tx_pin: GPIO17
+    rx_pin: GPIO16
+    baud_rate: 256000                           
+    parity: NONE
+    stop_bits: 1
+
+
+
+i2c:
+  sda: GPIO32
+  scl: GPIO33
+  scan: true
+  id: bus_a
+  frequency: 100kHz   # AHT20 推荐100kHz，不建议超过400kHz
+
+            
+# ---------------- LD2410 ----------------
+ld2410:
+  id: my_ld2410
+  uart_id: uart_ld2410
+
+
+# ---------------- Sensors ----------------
+remote_transmitter:
+  pin: 
+    number: GPIO18
+    inverted: False   #输出与电压状态，是否反向
+  carrier_duty_percent: 50%
+ # clock_resolution: 1000000
+  eot_level: False   #默认IDLE电平状态
+# ---------------- Globals ----------------

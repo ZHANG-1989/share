@@ -1,0 +1,14 @@
+output:
+
+
+  
+  - platform: gpio
+    id: gpio12_out
+    pin:
+      number: GPIO12
+      inverted: false
+
+
+
+
+# ---------------- Buttons ----------------

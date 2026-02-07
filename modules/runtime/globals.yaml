@@ -1,0 +1,135 @@
+globals:
+
+
+  - id: TODO_CNT   # <<< 记录脚本执行次数
+    type: uint8_t
+    restore_value: false
+    initial_value: '0'
+
+
+  - id: gpio22_state
+    type: bool
+    restore_value: no
+    initial_value: "false"
+
+  - id: cond_flags   # <<< 记录功能状态，方便后面自动开灯使能
+    type: uint8_t
+    restore_value: false
+    initial_value: '0'
+    # bit 位说明（对应 on_boot 中 BIT_* 定义）:
+    # bit0: 时间段 / BIT_TIME
+    # bit1: 暗环境 / BIT_DARK
+    # bit2: 功能开关 / BIT_FUNC
+    # bit3: 人在 / BIT_PRES
+    # bit4: 湿度传感器 / BIT_HUMM
+    # bit5: 干燥流程锁 / BIT_DRYI
+    # bit6: 人工关闭锁 / BIT_MOFF
+
+
+  - id: FRAME_SEQ_ID        # <<< 新增：收到的帧序号（单调递增）
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'  
+  - id: TABLE_WAVEFORM
+    type: std::vector<std::vector<int>>
+    restore_value: no
+    initial_value: 'std::vector<std::vector<int>>{}'
+  - id: WAVEFORM_COUNT
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: last_frame_start_us
+    type: int64_t
+    restore_value: no
+    initial_value: '0'
+  - id: REFERENCE_WAVEFORMS
+    type: std::vector<std::vector<int>>
+    restore_value: no
+    initial_value: !lambda |-
+      return get_reference_waveforms();
+
+  - id: REFERENCE_STATUS
+    type: std::vector<std::vector<int>>
+    restore_value: no
+    initial_value: |
+      std::vector<std::vector<int>>{
+
+      {1,0,0,0,0,0,0,1,1,3},
+      {0,0,0,0,0,0,0,1,1,2},
+      {0,1,0,0,0,0,0,1,1,3},
+      {0,0,1,0,0,0,1,0,1,3},
+      {0,1,1,0,0,0,1,0,1,4},
+      {1,0,1,0,0,0,1,0,1,4},
+      {0,0,1,0,0,1,0,0,1,3},
+      {0,1,1,0,0,1,0,0,1,4},
+      {1,0,1,0,0,1,0,0,1,4},
+      {1,0,1,0,1,0,0,0,1,4},
+      {0,0,1,0,1,0,0,0,1,3},
+      {0,1,1,0,1,0,0,0,1,4},
+      {1,0,0,0,1,0,0,0,1,3},
+      {0,0,0,0,1,0,0,0,1,2},
+      {0,1,0,0,1,0,0,0,1,3},
+      {1,0,0,0,0,0,1,0,1,3},
+      {0,0,0,0,0,0,1,0,1,2},
+      {0,1,0,0,0,0,1,0,1,3},
+      {0,0,0,0,0,1,0,0,1,2},
+      {0,1,0,0,0,1,0,0,1,3},
+      {1,0,0,0,0,1,0,0,1,3},
+      {1,0,0,1,0,0,0,0,1,3},
+      {0,1,0,1,0,0,0,0,1,3},
+      {0,0,0,1,0,0,0,0,1,2},
+      {1,0,0,0,0,0,0,1,0,2},
+      {0,1,0,0,0,0,0,1,0,2},
+      {0,0,0,0,0,0,0,1,0,1},
+      {1,0,1,0,0,0,1,0,0,3},
+      {0,0,1,0,0,0,1,0,0,2},
+      {0,1,1,0,0,0,1,0,0,3},
+      {0,0,1,0,0,1,0,0,0,2},
+      {0,1,1,0,0,1,0,0,0,3},
+      {1,0,1,0,0,1,0,0,0,3},
+      {1,0,1,0,0,0,0,0,0,2},
+      {0,1,1,0,0,0,0,0,0,2},
+      {0,0,1,0,0,0,0,0,0,1},
+      {1,0,1,0,1,0,0,0,0,3},
+      {0,1,1,0,1,0,0,0,0,3},
+      {0,0,1,0,1,0,0,0,0,2},
+      {1,0,0,0,1,0,0,0,0,2},
+      {0,1,0,0,1,0,0,0,0,2},
+      {0,0,0,0,1,0,0,0,0,1},
+      {1,0,0,0,0,0,1,0,0,2},
+      {0,1,0,0,0,0,1,0,0,2},
+      {0,0,0,0,0,0,1,0,0,1},
+      {0,1,0,0,0,1,0,0,0,2},
+      {0,0,0,0,0,1,0,0,0,1},
+      {1,0,0,0,0,1,0,0,0,2},
+      {1,0,0,1,0,0,0,0,0,2},
+      {1,0,0,0,0,0,0,0,0,1},
+      {0,1,0,1,0,0,0,0,0,2},
+      {0,1,0,0,0,0,0,0,0,1},
+      {0,0,0,1,0,0,0,0,0,1},
+      {0,0,0,0,0,0,0,0,0,0}
+
+
+      }
+
+   # ===== 功能标签 =====
+  - id: STATUS_LABELS
+    type: std::vector<std::string>
+    restore_value: no
+    initial_value: |
+      std::vector<std::string>{
+        "照明", "小夜灯", "换气", "沐浴", "吹风", "风暖10", "风暖20", "干燥", "摆风", "功能组合"
+      }     
+  - id: last_matched_id
+    type: int
+    restore_value: no
+    initial_value: '-1'
+  - id: match_counter
+    type: int
+    restore_value: no
+    initial_value: '0'
+
+  - id: rx_enabled
+    type: bool
+    restore_value: no
+    initial_value: "true"

@@ -1,0 +1,111 @@
+binary_sensor:
+  - platform: ld2410
+    has_target:
+      name: "Presence"
+    has_moving_target:
+      name: "Moving Target"
+    has_still_target:
+      name: "Still Target"
+  #LD2410输入引脚，外部下拉
+  - platform: gpio
+    id: input_gpio5
+    pin:
+      number: GPIO5
+     # mode: INPUT_PULLDOWN    # 外部有上拉/下拉也可以用 INPUT
+    name: "Input gpio5"
+    filters:
+      - delayed_on: 200ms
+      - delayed_off: 200ms
+
+    # on_press:
+    #   - logger.log: "gpio5 HIGH → GPIO22 = ON"
+    #   # - switch.turn_on: gpio22_out
+    #   # - lambda: |-
+    #   #     id(gpio22_state) = true;
+
+    # on_release:
+    #   - logger.log: "gpio5 LOW → GPIO22 = OFF"
+    #   # - switch.turn_off: gpio22_out
+    #   # - lambda: |-
+    #   #     id(gpio22_state) = false;
+ 
+ 
+  #镜前灯开关检测输入脚，外部下拉
+
+  - platform: gpio
+    id: input_gpio
+    pin:
+      number: GPIO34
+      mode: INPUT
+    name: "镜前灯input"
+    internal: True
+   # interrupt_type: FALLING
+    filters:
+      - delayed_on:  20ms
+      - delayed_off: 20ms
+    on_press:
+      - logger.log: "GPIO34 HIGH → turn OFF GPIO22"
+      - lambda: |-
+          // ===== 将 cond_flags 的第5位置 0   第4位置0 =====
+          id(cond_flags) &= ~ BIT_DRYI;
+          id(cond_flags) &= ~ BIT_HUMM;
+          id(cond_flags) |= BIT_MOFF;
+          ESP_LOGI("COND", "Manual OFF → BIT_MOFF set, flags=0x%02X", id(cond_flags));          
+      - switch.turn_off: gpio22_out
+      - script.execute: turn_off_all_light
+      - script.execute: turn_off_all_fan_function     
+      
+    on_release:
+      - logger.log: "GPIO34 LOW → turn ON GPIO22"
+      - lambda: |-
+          // ===== 将 cond_flags 的第5位置 0   第4位置1 =====
+          id(cond_flags) &= ~ BIT_DRYI;
+          id(cond_flags) |= BIT_HUMM;
+      - switch.turn_on: gpio22_out
+      - script.stop: turn_off_all_light
+      - script.stop: turn_off_all_fan_function
+
+  - platform: template
+    name: "FAN_STATUS"
+    id: fan_status
+
+  - platform: template
+    name: "照明 Light"
+    id: bs_light
+
+  - platform: template
+    name: "小夜灯 Night"
+    id: bs_night
+
+  - platform: template
+    name: "换气 Vent"
+    id: bs_vent
+
+  - platform: template
+    name: "沐浴 Bath"
+    id: bs_bath
+
+  - platform: template
+    name: "吹风 Blow"
+    id: bs_blow
+
+  - platform: template
+    name: "风暖10 Warm10"
+    id: bs_warm_10
+
+  - platform: template
+    name: "风暖20 Warm20"
+    id: bs_warm_20
+
+  - platform: template
+    name: "干燥 Dry"
+    id: bs_dry
+
+  - platform: template
+    name: "摆风 Swing"
+    id: bs_swing
+
+
+# ===========================
+#      多路输出定义
+# ===========================

@@ -1,0 +1,104 @@
+esphome:
+  name: washroom
+  friendly_name: washroom
+  includes:
+    - include/reference_waveforms.h
+    - include/cond_flags.h
+    # NOTE: 当前为 Windows 风格反斜杠路径；如遇编译失败可考虑改为正斜杠
+    - incluede\esp_timer.h
+  on_boot: 
+    then:
+      - delay: 5s
+      # - button.press: ld2410_query   # 开机 5 秒触发查询
+
+      - delay: 5min
+      - switch.turn_on: gpio22_out
+
+      - delay: 5s        
+      - switch.turn_on: engineering_mode_switch  
+
+        
+      - repeat:
+          count: 4
+          then:
+            - button.press: daiji
+            - delay: 1s
+#bit7 bit6 bit5 bit4 bit3 bit2 bit1 bit0
+#  |    |    |    |    |    |    |    |
+#  |    |    |    |    |    |    |    └─ 时间段
+#  |    |    |    |    |    |    └───── 暗环境
+#  |    |    |    |    |    └────────── 功能开关
+#  |    |    |    |    └─────────────── 人在
+#  |    |    |    └──────────────────── 湿度传感器
+#  |    |    |_________________________ 人工关闭锁
+esp32:
+  board: esp32dev
+  flash_size: 4MB
+  framework:
+    type: esp-idf    
+    advanced:
+      ignore_efuse_mac_crc: True
+      ignore_efuse_custom_mac: True
+    sdkconfig_options:
+      {
+      # NOTE: ESP-IDF 的 sdkconfig 推荐使用字符串 "y"/"n"，这里保持原值不改逻辑
+      "CONFIG_ESP_PHY_INIT_DATA_IN_PARTITION": n,
+      "CONFIG_ESP_PHY_REDUCE_TX_POWER": y,
+      "CONFIG_FREERTOS_UNICORE": y,
+      "CONFIG_BOOTLOADER_GPIO_ENABLE": y,
+      "CONFIG_BOOTLOADER_GPIO_PULL_DOWN": y,
+      }
+preferences:
+  flash_write_interval:
+    seconds: 600
+ota:
+  - platform: esphome
+    password: "a29c77960ab626463866d99bd53d1e51"
+wifi:
+  networks:
+    - ssid: "RowlinZhang"
+      password: "15281014413"
+    - ssid: "CMCC-TEST"
+      password: "15281014413"
+  ap:
+    ssid: "Zhang Fallback Hotspot"
+    password: "15281014413"
+api:
+  reboot_timeout:
+    seconds: 0
+  encryption:
+    key: "Dg4ro3NMnz3tNJJtJqKa5PDrX6Qz49jAzDUfkNIVTcE="
+
+  actions:
+    - action: set_ld2410_bluetooth_password
+      variables:
+        password: string
+      then:
+        - bluetooth_password.set:
+            id: my_ld2410
+            password: !lambda 'return password;'
+captive_portal:
+time:
+  - platform: sntp
+    id: my_time
+    timezone: Asia/Taipei
+
+
+ 
+# Web 管理页面
+web_server:
+  port: 8888
+  include_internal: true
+  version: 3
+  sorting_groups:
+    - id: sorting_group_time_settings
+      name: "Time Settings"
+      sorting_weight: 10
+    - id: sorting_group_number_settings
+      name: "number Settings"
+      sorting_weight: 20
+logger:
+  baud_rate: 0  # 关闭默认UART0日志，避免与传感器串口冲突
+  # logs:
+  #   remote.raw: NONE
+# ---------------- UART ----------------

@@ -1,0 +1,156 @@
+interval:
+
+
+
+      
+
+# 可选 – 监控传感器是否异常
+
+  - interval: 5min
+    then:
+      - lambda: |-
+          // 判断温度是否异常（低于 -20 或高于 80）
+          if (id(aht20_temperature).state < -20 || id(aht20_temperature).state > 80) {
+            // 输出警告日志提示传感器可能异常
+            ESP_LOGW("AHT20", "⚠ 温度超出合理范围，可能传感器异常");
+          }
+
+  - interval: 1s
+    then:
+      - lambda: |-
+
+          // 读取当前时间（来自 SNTP）
+          auto now = id(my_time).now();
+          // 如果时间无效则退出本次循环
+          if (!now.is_valid()) return;
+
+          // 计算当前时间的分钟数（0-1439）
+          int now_min = now.hour * 60 + now.minute;
+          // 读取“区间开始时间”设置
+          int start = (int) id(start_minute).state;
+          // 读取“区间结束时间”设置
+          int end   = (int) id(end_minute).state;
+
+          // 初始化区间判断结果
+          bool in_range = false;
+
+          // 常规区间（开始 < 结束）
+          if (start < end) {
+            // 当前分钟在区间内
+            in_range = (now_min >= start && now_min < end);
+          } else {
+            // 跨午夜区间（开始 >= 结束）
+            in_range = (now_min >= start || now_min < end);
+          }
+
+          // 根据区间结果设置 BIT_TIME
+          if (in_range) {
+            // 输出日志提示当前时间在区间内
+            ESP_LOGI("TIME", "当前时间在区间时间段内");
+            // 置位“时间段”标志
+            id(cond_flags) |= BIT_TIME;   // 置位
+          } else {
+            // 清位“时间段”标志
+            id(cond_flags) &= ~BIT_TIME;  // 清位
+          }
+          // 判断环境亮度是否低于阈值
+          if (id(env_brightness).state <= id(light_limit).state){
+            // 输出日志提示当前亮度满足条件
+            ESP_LOGI("BRIGHT","当前亮度在区间时间段内");
+            // 置位“暗环境”标志
+            id(cond_flags) |= BIT_DARK;
+          } else {
+            // 清位“暗环境”标志
+            id(cond_flags) &= ~BIT_DARK;
+          }
+          // 判断风机状态是否开启
+          if (id(fan_status).state > 0){
+            // 输出日志提示风机开启状态
+            ESP_LOGI("FAN","风机开启，人在可信度低");
+            // 置位“功能开关”标志
+            id(cond_flags) |= BIT_FUNC;
+          } else {
+            // 清位“功能开关”标志
+            id(cond_flags) &= ~BIT_FUNC;
+          }
+          // 判断人在传感器与主开关状态
+          if (id(input_gpio5).state &&id(gpio21_out).state ){
+            // 输出日志提示检测到人
+            ESP_LOGI("PRE","当前人在传感器检测有人");
+            // 置位“人在”标志
+            id(cond_flags) |= BIT_PRES;
+          } else {
+            // 清位“人在”标志
+            id(cond_flags) &= ~BIT_PRES;
+            // 清除“人工关闭锁”标志
+            id(cond_flags) &= ~BIT_MOFF;
+          }
+
+          // 判断湿度是否超过阈值
+          if (id(aht20_humidity).state >= id(aht20_humidity_limit).state){
+            // 输出日志提示湿度超标
+            ESP_LOGI("HUMM","当前环境湿度超过门限值，建议开启通风功能");
+            // 置位“湿度”标志
+            id(cond_flags) |= BIT_HUMM;
+          } else {
+            // 清位“湿度”标志
+            id(cond_flags) &= ~BIT_HUMM;
+          }
+
+          // 缓存当前条件位到本地变量
+          uint8_t f = id(cond_flags);
+
+          // ===== 人工关闭锁生效，自动化全部禁止 =====
+          if (f & BIT_MOFF) {
+            // 输出日志提示人工关闭锁生效
+            ESP_LOGD("COND", "Manual OFF lock active, skip automation");
+            // 直接退出本次判断
+            return;
+          }
+
+          // ===== 分支 1：X1011 =====
+          if ((f & MASK_X1011) == VAL_X1011) {
+            // 输出日志提示匹配 X1011 组合
+            ESP_LOGI("COND", "match X1011 → script_x1011--打开照明");
+            // 将 cond_flags 的第5位置 0
+            id(cond_flags) &= ~ BIT_DRYI;
+            // 将 cond_flags 的第4位置 1
+            id(cond_flags) |= BIT_HUMM;
+            // 停止关灯脚本（避免冲突）
+            id(turn_off_all_light).stop();
+            // 停止关风机脚本（避免冲突）
+            id(turn_off_all_fan_function).stop();
+            // 打开镜前灯开关
+            id(gpio22_out).turn_on();
+          }
+          // ===== 分支 2：010XXX =====
+          else if ((f & MASK_010XXX) == VAL_010XXX && (f & BIT_MOFF) == 0) {
+            // 输出日志提示匹配 010XXX 组合
+            ESP_LOGI("COND", "match 010XXX → script_010xxx开始干燥");
+            // 执行干燥流程脚本
+            id(turn_on_todry).execute();
+          }
+          // ===== 分支 3：X0XXX =====
+          else if ((f & MASK_X0XXX) == VAL_X0XXX && id(gpio21_out).state && id(gpio22_out).state) {
+            // 输出日志提示匹配 X0XXX 组合
+            ESP_LOGI("COND", "match X0XXX → script_x0xxx关闭照明");
+            // 执行关灯脚本
+            id(turn_off_all_light).execute();
+          }
+          // ===== 未匹配任何组合 =====
+          else {
+            // 输出日志提示没有匹配分支
+            ESP_LOGD("COND", "no pattern match");
+          }
+
+
+  - interval: 1h
+    then:
+      - switch.turn_on: engineering_mode_switch           
+          
+# =========================
+# 直接声明 GPIO
+# =========================
+# =================================================
+# RMT 输出（硬件级脉冲，WiFi 不影响）
+# =================================================
