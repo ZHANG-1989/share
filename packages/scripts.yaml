@@ -1,2 +1,0 @@
-# 脚本清单拆分到 scripts/ 目录，便于维护
-script: !include ../scripts/scripts.yaml

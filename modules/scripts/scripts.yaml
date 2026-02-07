@@ -1,0 +1,2 @@
+# 脚本清单拆分到 modules/scripts/definitions.yaml，便于维护
+script: !include definitions.yaml

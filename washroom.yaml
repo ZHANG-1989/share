@@ -1,20 +1,25 @@
 packages:
-  # 核心与平台配置
-  core: !include packages/core.yaml
-  # 硬件总线/设备
-  hardware: !include packages/hardware.yaml
-  # 传感器与输入
-  sensors: !include packages/sensors.yaml
-  binary_sensors: !include packages/binary_sensors.yaml
-  # 输出与控制面板
-  outputs: !include packages/outputs.yaml
-  buttons: !include packages/buttons.yaml
-  switches: !include packages/switches.yaml
-  numbers: !include packages/numbers.yaml
-  text_sensors: !include packages/text_sensors.yaml
-  selects: !include packages/selects.yaml
-  # 定时逻辑与全局状态
-  intervals: !include packages/intervals.yaml
-  globals: !include packages/globals.yaml
-  # 脚本流程
-  scripts: !include packages/scripts.yaml
+  # ========== 平台与基础 ==========
+  core: !include modules/core/core.yaml
+
+  # ========== 硬件与总线 ==========
+  hardware: !include modules/hardware/hardware.yaml
+
+  # ========== 传感器与输入 ==========
+  sensors: !include modules/sensors/sensors.yaml
+  binary_sensors: !include modules/sensors/binary_sensors.yaml
+
+  # ========== 控制与显示 ==========
+  outputs: !include modules/controls/outputs.yaml
+  buttons: !include modules/controls/buttons.yaml
+  switches: !include modules/controls/switches.yaml
+  numbers: !include modules/controls/numbers.yaml
+  text_sensors: !include modules/controls/text_sensors.yaml
+  selects: !include modules/controls/selects.yaml
+
+  # ========== 自动化与状态 ==========
+  intervals: !include modules/automation/intervals.yaml
+  globals: !include modules/runtime/globals.yaml
+
+  # ========== 脚本流程 ==========
+  scripts: !include modules/scripts/scripts.yaml
