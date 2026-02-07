@@ -1,0 +1,110 @@
+button:
+  - platform: ld2410
+
+    # factory_reset:
+    #   name: Factory reset
+    restart:
+      name: Restart
+    # query_params:
+    #   name: Query params
+    #   id: ld2410_query 
+    #   internal: true     # ← 不同步到 HA，只在 Web Page 可调 
+# ---------------- Switches ----------------
+
+
+  - platform: template
+    id: chuifeng
+    name: "吹风 Blow SET"
+    on_press:
+      - script.execute: send_waveform_chuifeng
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji   
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji    
+      
+      
+      
+  - platform: template
+    id: daiji
+    name: "心跳 Beat GET"
+    on_press:
+      - script.execute: send_waveform_daiji
+
+  - platform: template
+    id: guanji
+    name: "关机 TurnOff SET"
+    on_press:
+      - script.execute: send_waveform_guanji  
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji   
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji    
+
+  - platform: template
+    id: huanqi
+    name: "换气 Vent SET"
+    on_press:
+      - script.execute: send_waveform_huanqi
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji   
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji          
+  - platform: template
+    id: muyu
+    name: "沐浴 Bath/干燥 Dry -SET"
+    on_press:
+      - script.execute: send_waveform_muyu
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji   
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji     
+
+  - platform: template
+    id: nuanfeng
+    name: "风暖10 Warm10/风暖20 Warm20 SET"
+    on_press:
+      - script.execute: send_waveform_nuanfeng
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji   
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji   
+
+  - platform: template
+    id: xiaoyedeng
+    name: "小夜灯 Night SET"
+    on_press:
+      - script.execute: send_waveform_xiaoyedeng
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji   
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji          
+  - platform: template
+    id: zhaoming
+    name: "照明 Light SET"
+  
+    on_press:     
+      - script.execute: send_waveform_zhaoming  
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji   
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji                      
+  - platform: template
+    id: baifeng
+    name: "摆风 Swing SET"
+    on_press:
+      - script.execute: send_waveform_baifeng  
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji   
+      - delay: 80ms      
+      - script.execute: send_waveform_daiji          
+
+  - platform: template
+    name: "关闭所有设备"
+    id: btn_turn_off_all
+    on_press:
+      then:
+        - script.execute: turn_off_all_light
+        - script.execute: turn_off_all_fan_function
+
+# ---------------- Switches ----------------
+# 手动重启 ESP32 的开关

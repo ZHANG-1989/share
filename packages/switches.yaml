@@ -1,0 +1,36 @@
+switch:
+  - platform: restart
+    name: ESP32 Restart
+    id: restart_switch
+  - platform: ld2410
+    engineering_mode:
+      name: Engineering mode
+      id: engineering_mode_switch   # ← 添加 id      
+      
+    bluetooth:
+      name: Control bluetooth
+      internal: true     # ← 不同步到 HA，只在 Web Page 可调 
+
+
+  - platform: template
+    name: "重启面板-chongqi"
+    turn_on_action:
+      - script.execute: send_waveform_chongqi
+
+
+  - platform: gpio
+    name: "GPIO22 Control-镜前灯开关"
+    id: gpio22_out
+    pin: GPIO22
+    restore_mode: RESTORE_DEFAULT_OFF
+
+
+  - platform: gpio
+    name: "GPIO21 Control-LD2410开关"
+    id: gpio21_out
+    pin: GPIO21
+    restore_mode: RESTORE_DEFAULT_OFF 
+
+
+
+# ---------------- Number ----------------

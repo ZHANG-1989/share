@@ -1,0 +1,45 @@
+select:
+  - platform: ld2410
+    distance_resolution:
+      name: "Distance Resolution"
+      internal: true     # ← 不同步到 HA，只在 Web Page 可调         
+    baud_rate:
+      name: "Baud Rate"
+      id: "Baud_Rate"
+      internal: true     # ← 不同步到 HA，只在 Web Page 可调         
+      on_value:
+        then:
+          - delay: 2s
+        
+          - lambda: |-           
+              // 自动同步刷新网页设置的串口波特率，匹配设备和 ESP32
+              // 记录上一次波特率字符串，避免重复设置
+              static std::string last_level = "";
+              // 读取当前 UI 选择的波特率字符串
+              std::string level = id(Baud_Rate).state;
+              // 将字符串转换为数值（例："256000" → 256000）
+              uint32_t baud = std::stoul(level);  // 将字符串转换为整数
+              // 仅当波特率发生变化时才更新串口设置
+              if (level != last_level) {
+              // 打印当前选择的波特率
+              ESP_LOGI("LD2410", "当前 Baud_Rate = %s", level.c_str());
+              // 打印即将设置的 UART 波特率数值
+              ESP_LOGI("uart", "Setting UART baud rate to %lu", baud);
+              // 设置 UART 波特率（运行时更新）
+              id(uart_ld2410).set_baud_rate(baud);
+              // 将 UART 配置写入并应用
+              id(uart_ld2410).load_settings();
+              // 更新缓存的波特率字符串
+              last_level = level;
+              // 强制同步 Web UI 和内部状态
+              id(Baud_Rate).publish_state(level);   // ⭐ 强制同步 Web UI 和内部状态
+              // 结束本次更新分支
+              }
+              // 自动同步刷新网页设置的串口波特率，匹配设备和 ESP32
+    light_function:
+      name: "Light Function"
+      internal: true     # ← 不同步到 HA，只在 Web Page 可调   
+
+    out_pin_level:
+      name: "Out Pin Level"
+      internal: true     # ← 不同步到 HA，只在 Web Page 可调

@@ -1,0 +1,56 @@
+text_sensor:
+
+ 
+  - platform: ld2410
+    version:
+      name: Firmware version
+      id: ld2410_version
+      
+    mac_address:
+      name: MAC address
+      id: ld2410_mac
+
+
+  - platform: template
+    name: "当前时间TIME"
+    update_interval: 1s
+    lambda: |-
+      // 读取 SNTP 时间
+      auto now = id(my_time).now();
+      // 若时间无效则返回“未同步”
+      if (!now.is_valid()) return std::string("未同步");
+
+      // 准备时间字符串缓冲区
+      char buf[20];
+      // 格式化时间为 HH:MM:SS
+      snprintf(buf, sizeof(buf), "%02d:%02d:%02d",
+               now.hour, now.minute, now.second);
+      // 返回格式化后的时间字符串
+      return std::string(buf);
+
+
+ 
+
+  - platform: template
+    id: cond_flags_bin
+    name: "条件状态位(cond_flags)"
+    update_interval: 1s
+    lambda: |-
+      // 准备 8 位二进制字符串缓冲区
+      char buf[9];   // 8 bit + '\0'
+      // 读取当前 cond_flags 值
+      uint8_t v = id(cond_flags);
+
+      // 逐位生成二进制字符串（从 bit7 到 bit0）
+      for (int i = 7; i >= 0; i--) {
+        // 将当前位写入字符串
+        buf[7 - i] = (v & (1 << i)) ? '1' : '0';
+      }
+      // 末尾补零结束符
+      buf[8] = '\0';
+
+      // 返回二进制字符串
+      return std::string(buf);
+
+
+# ---------------- Select ----------------

@@ -1,0 +1,53 @@
+number:
+  # - platform: ld2410
+  #   timeout:
+  #     name: Timeout
+  #     internal: true     # ← 不同步到 HA，只在 Web Page 可调        
+  #   light_threshold:
+  #     name: Light threshold
+  #     internal: true     # ← 不同步到 HA，只在 Web Page 可调  
+  #   max_move_distance_gate:
+  #     name: Max move distance gate
+  #     internal: true     # ← 不同步到 HA，只在 Web Page 可调  
+  #   max_still_distance_gate:
+  #     name: Max still distance gate
+  #     internal: true     # ← 不同步到 HA，只在 Web Page 可调  
+
+  - platform: template
+    name: "区间开始时间(分钟)START"
+    id: start_minute
+    min_value: 0
+    max_value: 1439
+    step: 1
+    restore_value: true
+    initial_value: 450  # 07:30
+    optimistic: true
+
+  - platform: template
+    name: "亮度门限(LIGHT)"
+    id: light_limit
+    min_value: 0
+    max_value: 100
+    step: 1
+    restore_value: true
+    optimistic: true
+    initial_value: 40   # 初始值
+
+  - platform: template
+    name: "湿度门限(humm)"
+    id: aht20_humidity_limit
+    min_value: 0
+    max_value: 100
+    step: 1
+    restore_value: true
+    initial_value: 40   # 初始值    
+    optimistic: true
+  - platform: template
+    name: "区间结束时间(分钟)STOP"  
+    id: end_minute
+    min_value: 0
+    max_value: 1439
+    step: 1
+    restore_value: true
+    initial_value: 1320    # 22:00
+    optimistic: true

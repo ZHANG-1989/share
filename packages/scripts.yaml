@@ -1,0 +1,607 @@
+script:
+  - id: send_waveform_daiji
+    mode: restart
+    then:
+      - remote_transmitter.transmit_raw:
+          code: [   
+            #默认idle 上拉高电平
+            # 波形开始，低电平先开始    
+          420,#面板心跳波形-2电平状态:低
+          -210,#面板心跳波形1电平状态:高
+          210,#面板心跳波形-1电平状态:低
+          -210,#面板心跳波形1电平状态:高
+          210,#面板心跳波形-1电平状态:低
+          -210,#面板心跳波形1电平状态:高
+          210,#面板心跳波形-1电平状态:低
+          -420,#面板心跳波形2电平状态:高
+          1890,#面板心跳波形-9电平状态:低
+          -210,#面板心跳波形1电平状态:高
+          1890,#面板心跳波形-9电平状态:低
+          -210,#面板心跳波形1电平状态:高
+          420,#面板心跳波形-2电平状态:低
+          -420,#面板心跳波形2电平状态:高
+          210,#面板心跳波形-1电平状态:低
+          -210,#面板心跳波形1电平状态:高
+          210,#面板心跳波形-1电平状态:低
+          -210,#面板心跳波形1电平状态:高
+          210,#面板心跳波形-1电平状态:低
+            # 波形结束，默认idle 上拉高电平
+          ]
+  - id: send_waveform_guanji
+    mode: restart
+    then:
+      - remote_transmitter.transmit_raw:
+          code: [       
+            #默认idle 上拉高电平
+            # 波形开始，低电平先开始
+          420,#关机请求波形-2电平状态:低   
+          -210,#关机请求波形1电平状态:高   
+          210,#关机请求波形-1电平状态:低   
+          -210,#关机请求波形1电平状态:高   
+          210,#关机请求波形-1电平状态:低   
+          -210,#关机请求波形1电平状态:高   
+          210,#关机请求波形-1电平状态:低   
+          -420,#关机请求波形2电平状态:高   
+          1470,#关机请求波形-7电平状态:低   
+          -210,#关机请求波形1电平状态:高   
+          210,#关机请求波形-1电平状态:低   
+          -210,#关机请求波形1电平状态:高   
+          1890,#关机请求波形-9电平状态:低   
+          -210,#关机请求波形1电平状态:高   
+          420,#关机请求波形-2电平状态:低   
+          -420,#关机请求波形2电平状态:高   
+          210,#关机请求波形-1电平状态:低   
+          -210,#关机请求波形1电平状态:高   
+          630,#关机请求波形-3电平状态:低   
+            # 波形结束，默认idle 上拉高电平
+          ]
+  - id: send_waveform_huanqi
+    mode: restart
+    then:
+      - remote_transmitter.transmit_raw:
+          code: [       
+        420,#换气请求波形-2电平状态:低
+        -210,#换气请求波形1电平状态:高
+        210,#换气请求波形-1电平状态:低
+        -210,#换气请求波形1电平状态:高
+        210,#换气请求波形-1电平状态:低
+        -210,#换气请求波形1电平状态:高
+        210,#换气请求波形-1电平状态:低
+        -420,#换气请求波形2电平状态:高
+        1050,#换气请求波形-5电平状态:低
+        -210,#换气请求波形1电平状态:高
+        630,#换气请求波形-3电平状态:低
+        -210,#换气请求波形1电平状态:高
+        1890,#换气请求波形-9电平状态:低
+        -210,#换气请求波形1电平状态:高
+        420,#换气请求波形-2电平状态:低
+        -420,#换气请求波形2电平状态:高
+        630,#换气请求波形-3电平状态:低
+        -210,#换气请求波形1电平状态:高
+        210,#换气请求波形-1电平状态:低
+            # 波形结束，默认idle 上拉高电平
+          ]
+  - id: send_waveform_muyu
+    mode: restart
+    then:
+      - remote_transmitter.transmit_raw:
+          code: [       
+            #默认idle 上拉高电平
+            # 波形开始，低电平先开始
+            420,#沐浴请求波形-2电平状态:低
+            -210,#沐浴请求波形1电平状态:高
+            210,#沐浴请求波形-1电平状态:低
+            -210,#沐浴请求波形1电平状态:高
+            210,#沐浴请求波形-1电平状态:低
+            -210,#沐浴请求波形1电平状态:高
+            210,#沐浴请求波形-1电平状态:低
+            -420,#沐浴请求波形2电平状态:高
+            1680,#沐浴请求波形-8电平状态:低
+            -420,#沐浴请求波形2电平状态:高
+            1890,#沐浴请求波形-9电平状态:低
+            -210,#沐浴请求波形1电平状态:高
+            420,#沐浴请求波形-2电平状态:低
+            -420,#沐浴请求波形2电平状态:高
+            210,#沐浴请求波形-1电平状态:低
+            -210,#沐浴请求波形1电平状态:高
+            210,#沐浴请求波形-1电平状态:低
+            # 波形结束，默认idle 上拉高电平
+          ]
+  - id: send_waveform_nuanfeng
+    mode: restart
+    then:
+      - remote_transmitter.transmit_raw:
+          code: [       
+            #默认idle 上拉高电平
+            # 波形开始，低电平先开始
+            420,#暖风请求波形-2电平状态:低
+            -210,#暖风请求波形1电平状态:高
+            210,#暖风请求波形-1电平状态:低
+            -210,#暖风请求波形1电平状态:高
+            210,#暖风请求波形-1电平状态:低
+            -210,#暖风请求波形1电平状态:高
+            210,#暖风请求波形-1电平状态:低
+            -420,#暖风请求波形2电平状态:高
+            840,#暖风请求波形-4电平状态:低
+            -210,#暖风请求波形1电平状态:高
+            840,#暖风请求波形-4电平状态:低
+            -210,#暖风请求波形1电平状态:高
+            1890,#暖风请求波形-9电平状态:低
+            -210,#暖风请求波形1电平状态:高
+            420,#暖风请求波形-2电平状态:低
+            -630,#暖风请求波形3电平状态:高
+            420,#暖风请求波形-2电平状态:低
+            -210,#暖风请求波形1电平状态:高
+            210,#暖风请求波形-1电平状态:低
+            # 波形结束，默认idle 上拉高电平
+          ]
+  - id: send_waveform_xiaoyedeng
+    mode: restart
+    then:
+      - remote_transmitter.transmit_raw:
+          code: [                 
+            #默认idle 上拉高电平
+            # 波形开始，低电平先开始
+        420,#小夜灯请求波形-2电平状态:低
+        -210,#小夜灯请求波形1电平状态:高
+        210,#小夜灯请求波形-1电平状态:低
+        -210,#小夜灯请求波形1电平状态:高
+        210,#小夜灯请求波形-1电平状态:低
+        -210,#小夜灯请求波形1电平状态:高
+        210,#小夜灯请求波形-1电平状态:低
+        -420,#小夜灯请求波形2电平状态:高
+        420,#小夜灯请求波形-2电平状态:低
+        -210,#小夜灯请求波形1电平状态:高
+        1260,#小夜灯请求波形-6电平状态:低
+        -210,#小夜灯请求波形1电平状态:高
+        1890,#小夜灯请求波形-9电平状态:低
+        -210,#小夜灯请求波形1电平状态:高
+        630,#小夜灯请求波形-3电平状态:低
+        -210,#小夜灯请求波形1电平状态:高
+        210,#小夜灯请求波形-1电平状态:低
+        -210,#小夜灯请求波形1电平状态:高
+        210,#小夜灯请求波形-1电平状态:低
+        -210,#小夜灯请求波形1电平状态:高
+        210,#小夜灯请求波形-1电平状态:低
+            # 波形结束，默认idle 上拉高电平
+          ]
+  - id: send_waveform_zhaoming
+    mode: restart
+    then:
+      - remote_transmitter.transmit_raw:
+          code: [       
+            #默认idle 上拉高电平
+            # 波形开始，低电平先开始
+          420,#照明请求波形-2电平状态:低
+          -210,#照明请求波形1电平状态:高
+          210,#照明请求波形-1电平状态:低
+          -210,#照明请求波形1电平状态:高
+          210,#照明请求波形-1电平状态:低
+          -210,#照明请求波形1电平状态:高
+          210,#照明请求波形-1电平状态:低
+          -420,#照明请求波形2电平状态:高
+          210,#照明请求波形-1电平状态:低
+          -210,#照明请求波形1电平状态:高
+          1470,#照明请求波形-7电平状态:低
+          -210,#照明请求波形1电平状态:高
+          1890,#照明请求波形-9电平状态:低
+          -210,#照明请求波形1电平状态:高
+          210,#照明请求波形-1电平状态:低
+          -210,#照明请求波形1电平状态:高
+          210,#照明请求波形-1电平状态:低
+          -210,#照明请求波形1电平状态:高
+          210,#照明请求波形-1电平状态:低
+          -210,#照明请求波形1电平状态:高
+          210,#照明请求波形-1电平状态:低
+          -210,#照明请求波形1电平状态:高
+          210,#照明请求波形-1电平状态:低
+            # 波形结束，默认idle 上拉高电平
+          ]
+  - id: send_waveform_baifeng
+    mode: restart
+    then:
+      - remote_transmitter.transmit_raw:
+          code: [       
+            #默认idle 上拉高电平
+            # 波形开始，低电平先开始
+            420,#摆风请求波形-2电平状态:低
+            -210,#摆风请求波形1电平状态:高
+            210,#摆风请求波形-1电平状态:低
+            -210,#摆风请求波形1电平状态:高
+            210,#摆风请求波形-1电平状态:低
+            -210,#摆风请求波形1电平状态:高
+            210,#摆风请求波形-1电平状态:低
+            -420,#摆风请求波形2电平状态:高
+            630,#摆风请求波形-3电平状态:低
+            -210,#摆风请求波形1电平状态:高
+            1050,#摆风请求波形-5电平状态:低
+            -210,#摆风请求波形1电平状态:高
+            1890,#摆风请求波形-9电平状态:低
+            -210,#摆风请求波形1电平状态:高
+            420,#摆风请求波形-2电平状态:低
+            -210,#摆风请求波形1电平状态:高
+            420,#摆风请求波形-2电平状态:低
+            -210,#摆风请求波形1电平状态:高
+            210,#摆风请求波形-1电平状态:低
+            -210,#摆风请求波形1电平状态:高
+            210,#摆风请求波形-1电平状态:低
+            # 波形结束，默认idle 上拉高电平
+          ]
+  - id: send_waveform_chuifeng
+    mode: restart
+    then:
+      - remote_transmitter.transmit_raw:
+          code: [       
+            #默认idle 上拉高电平
+            # 波形开始，低电平先开始
+          420,#吹风请求波形-2电平状态:低
+          -210,#吹风请求波形1电平状态:高
+          210,#吹风请求波形-1电平状态:低
+          -210,#吹风请求波形1电平状态:高
+          210,#吹风请求波形-1电平状态:低
+          -210,#吹风请求波形1电平状态:高
+          210,#吹风请求波形-1电平状态:低
+          -420,#吹风请求波形2电平状态:高
+          1260,#吹风请求波形-6电平状态:低
+          -210,#吹风请求波形1电平状态:高
+          420,#吹风请求波形-2电平状态:低
+          -210,#吹风请求波形1电平状态:高
+          1890,#吹风请求波形-9电平状态:低
+          -210,#吹风请求波形1电平状态:高
+          420,#吹风请求波形-2电平状态:低
+          -420,#吹风请求波形2电平状态:高
+          210,#吹风请求波形-1电平状态:低
+          -420,#吹风请求波形2电平状态:高
+          420,#吹风请求波形-2电平状态:低
+            # 波形结束，默认idle 上拉高电平
+          ]
+  - id: send_waveform_chongqi
+    mode: restart
+    then:
+      - remote_transmitter.transmit_raw:
+          code: [       
+            #默认idle 上拉高电平
+            # 波形开始，低电平先开始
+          500000,#吹风请求波形-2电平状态:低
+            # 波形结束，默认idle 上拉高电平
+          ]          
+  # 手动重启 ESP32 的开关     
+
+
+  - id: turn_off_all_devices
+    mode: restart
+    then:
+
+      - lambda: |-
+              // 输出日志：进入“关闭所有设备”流程
+              ESP_LOGI("SYS", "Turn off all devices → RX OFF");
+              // 临时关闭接收（避免接收干扰）
+              id(rx_enabled) = false;
+              // 写入功能计数标记（调试用）
+              id(s_func_count).publish_state(8888);
+
+              // NOTE: TODO_CNT 用于限制递归重试次数（避免反复执行）
+              // 该计数在其它脚本中会递增；此脚本可按需同步递增。
+              // 若重试次数达到上限，则退出
+              if (id(TODO_CNT) >= 3) {
+              // 输出日志：达到重试上限
+              ESP_LOGW("TODO", "已重试 %d 次，放弃执行", id(TODO_CNT));
+              // 重置计数器
+              id(TODO_CNT) = 0;
+              // 退出当前脚本
+              return;
+              }
+      # 检查每个 sensor，如果开启则触发对应按钮
+ 
+      - if:
+
+          condition:
+            lambda: 'return id(gpio22_out).state;'
+          then:
+            - switch.turn_off: gpio22_out
+            - delay: 200ms
+      - if:
+          condition:
+            lambda: 'return id(bs_light).state;'
+          then:
+            - button.press: zhaoming
+            - delay: 200ms
+      - if:
+          condition:
+            lambda: 'return id(bs_night).state;'
+          then:
+            - button.press: xiaoyedeng
+            - delay: 200ms
+
+
+      - if:
+          condition:
+            lambda: 'return id(bs_warm_10).state ;'
+          then:
+            - button.press: nuanfeng
+            - delay: 200ms
+
+            - button.press: nuanfeng           
+            - delay: 200ms
+      - if:
+          condition:
+            lambda: 'return id(bs_warm_20).state;'
+          then:
+            - button.press: nuanfeng
+            - delay: 200ms
+
+      - if:
+          condition:
+            lambda: 'return id(bs_bath).state ;'
+          then:
+            - button.press: muyu
+            - delay: 200ms
+            - button.press: muyu           
+            - delay: 200ms
+      - if:
+          condition:
+            lambda: 'return  id(bs_dry).state;'
+          then:
+            - button.press: muyu
+            - delay: 200ms
+
+
+      - if:
+          condition:
+            lambda: 'return id(bs_vent).state;'
+          then:
+            - button.press: huanqi
+            - delay: 200ms
+
+
+
+      - if:
+          condition:
+            lambda: 'return id(bs_blow).state;'
+          then:
+            - button.press: chuifeng
+            - delay: 200ms
+
+
+      # 等待波形发送完成
+      #- delay: 5s   
+
+      - lambda: |-
+              ESP_LOGI("SYS", "Turn off all devices → RX ON");
+              id(rx_enabled) = true;       
+
+      - delay: 5s       
+      # 如果还有设备未关闭，递归调用自己
+      - if:
+          condition:
+            lambda: |-
+              return id(bs_light).state
+                  || id(bs_night).state
+                  || id(bs_vent).state
+                  || id(bs_bath).state
+                  || id(bs_dry).state
+                  || id(bs_blow).state
+                  || id(bs_warm_10).state
+                  || id(bs_warm_20).state
+                  || id(bs_swing).state
+                  || id(gpio22_out).state;
+          then:
+            - script.execute: turn_off_all_devices
+
+
+
+
+  - id: turn_off_all_light
+    mode: restart
+    then:
+
+      - lambda: |-
+              // 输出日志：进入“关闭所有照明”流程
+              ESP_LOGI("SYS", "Turn off all light → RX OFF");
+              // 临时关闭接收（避免接收干扰）
+              id(rx_enabled) = false;
+
+              // 若重试次数达到上限，则退出
+              if (id(TODO_CNT) >= 3) {
+                // 输出日志：达到重试上限
+                ESP_LOGW("TODO", "已重试 %d 次，放弃执行", id(TODO_CNT));
+                // 重置计数器
+                id(TODO_CNT) = 0;
+                // 清除干燥流程锁标志
+                id(cond_flags) &= ~BIT_DRYI;   // 清状态位
+                // 退出当前脚本
+                return;
+              }
+
+              // 累加重试计数
+              id(TODO_CNT)++;
+              // 输出日志：当前尝试次数
+              ESP_LOGI("TODO", "第 %d 次尝试执行任务", id(TODO_CNT));
+
+      # 检查每个 sensor，如果开启则触发对应按钮
+ 
+      - if:
+
+          condition:
+            lambda: 'return id(gpio22_out).state;'
+          then:
+            - switch.turn_off: gpio22_out
+            - delay: 200ms
+      - if:
+          condition:
+            lambda: 'return id(bs_light).state;'
+          then:
+            - button.press: zhaoming
+            - delay: 200ms
+      - if:
+          condition:
+            lambda: 'return id(bs_night).state;'
+          then:
+            - button.press: xiaoyedeng
+            - delay: 200ms
+
+
+      - lambda: |-
+              ESP_LOGI("SYS", "Turn off all light → RX ON");
+              id(rx_enabled) = true;       
+      - delay: 5s       
+      # 如果还有设备未关闭，递归调用自己
+      - if:
+          condition:
+            lambda: |-
+              id(s_func_count).publish_state(6666);
+              return id(bs_light).state
+                  || id(bs_night).state 
+                  || id(gpio22_out).state;
+          then:
+            - script.execute: turn_off_all_light
+
+
+
+  - id: turn_off_all_fan_function
+    mode: restart
+    then:
+
+      - lambda: |-
+              // 输出日志：进入“关闭所有风机功能”流程
+              ESP_LOGI("SYS", "Turn off all fan_function → RX OFF");
+              // 临时关闭接收（避免接收干扰）
+              id(rx_enabled) = false;
+              // 写入功能计数标记（调试用）
+              id(s_func_count).publish_state(9999);
+
+
+              // 若重试次数达到上限，则退出
+              if (id(TODO_CNT) >= 3) {
+                // 输出日志：达到重试上限
+                ESP_LOGW("TODO", "已重试 %d 次，放弃执行", id(TODO_CNT));
+                // 重置计数器
+                id(TODO_CNT) = 0;
+                // 清除干燥流程锁标志
+                id(cond_flags) &= ~BIT_DRYI;   // 清状态位
+                // 退出当前脚本
+                return;
+              }
+
+              // 累加重试计数
+              id(TODO_CNT)++;
+              // 输出日志：当前尝试次数
+              ESP_LOGI("TODO", "第 %d 次尝试执行任务", id(TODO_CNT));
+      # 检查每个 sensor，如果开启则触发对应按钮
+ 
+ 
+      - if:
+          condition:
+            lambda: 'return id(bs_warm_10).state ;'
+          then:
+            - button.press: nuanfeng
+            - delay: 200ms
+
+            - button.press: nuanfeng           
+            - delay: 200ms
+      - if:
+          condition:
+            lambda: 'return id(bs_warm_20).state;'
+          then:
+            - button.press: nuanfeng
+            - delay: 200ms
+
+      - if:
+          condition:
+            lambda: 'return id(bs_bath).state ;'
+          then:
+            - button.press: muyu
+            - delay: 200ms
+            - button.press: muyu           
+            - delay: 200ms
+      - if:
+          condition:
+            lambda: 'return  id(bs_dry).state;'
+          then:
+            - button.press: muyu
+            - delay: 200ms
+
+
+      - if:
+          condition:
+            lambda: 'return id(bs_vent).state;'
+          then:
+            - button.press: huanqi
+            - delay: 200ms
+
+
+
+      - if:
+          condition:
+            lambda: 'return id(bs_blow).state;'
+          then:
+            - button.press: chuifeng
+            - delay: 200ms
+
+
+      # 等待波形发送完成
+      #- delay: 5s   
+
+      - lambda: |-
+              ESP_LOGI("SYS", "Turn off all fan_function → RX ON");
+              id(rx_enabled) = true;       
+      - delay: 5s       
+      # 如果还有设备未关闭，递归调用自己
+      - if:
+          condition:
+            lambda: |-
+              return id(bs_vent).state
+                  || id(bs_bath).state
+                  || id(bs_dry).state
+                  || id(bs_blow).state
+                  || id(bs_warm_10).state
+                  || id(bs_warm_20).state
+                  || id(bs_swing).state;
+          then:
+            - script.execute: turn_off_all_fan_function
+
+
+
+  - id: turn_on_todry
+    mode: restart
+    then: 
+      - lambda: |-
+
+
+
+          // ===== 先将 cond_flags 的第5位置 1 =====
+          // 置位“干燥流程锁”标志
+          id(cond_flags) |= BIT_DRYI;
+
+          // ===== 判断状态 =====
+          // NOTE: 这里使用 delay() 为阻塞式延时，可能影响主循环。
+          // 若需避免阻塞，可改为使用脚本步骤 + delay: 动作拆分流程。
+          // 读取当前通风状态（0 代表关闭）
+          int status = id(bs_vent).state;  // 假设 status 为整数类型
+          // 输出日志：开始干燥流程
+          ESP_LOGI("TODRY", "开始干燥环境");
+          // 若通风未开启则直接开启通风
+          if (status == 0) {
+          // 触发通风按钮
+          id(huanqi).press();
+          }else{
+            // 已开启通风：先延时 600 秒
+            delay(600000);   // 600S = 600*1000ms
+            // 关闭/切换通风
+            id(huanqi).press();
+            // 延时 6 秒等待状态稳定
+            delay(6000);     // 6S
+            // 开启吹风
+            id(chuifeng).press();
+            // 延时 600 秒
+            delay(600000);   // 600S
+            // 关闭吹风
+            id(chuifeng).press();
+          }
+          // 执行一键关闭所有设备
+          id(btn_turn_off_all).press();
+          // 输出日志：记录通风状态
+          ESP_LOGI("TODRY", "状态=%d → 无操作", status);
+          // ===== 将 cond_flags 的第5位置 0 =====
+          // 清除“干燥流程锁”标志
+          id(cond_flags) &= ~ BIT_DRYI;
