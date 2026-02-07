@@ -2,6 +2,7 @@ esphome:
   name: washroom
   friendly_name: washroom
   includes:
+    - include/reference_waveforms.h
     - include/cond_flags.h
     # NOTE: 当前为 Windows 风格反斜杠路径；如遇编译失败可考虑改为正斜杠
     - incluede\esp_timer.h
