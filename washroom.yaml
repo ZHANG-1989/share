@@ -1,14 +1,20 @@
 packages:
+  # 核心与平台配置
   core: !include packages/core.yaml
+  # 硬件总线/设备
   hardware: !include packages/hardware.yaml
+  # 传感器与输入
   sensors: !include packages/sensors.yaml
   binary_sensors: !include packages/binary_sensors.yaml
+  # 输出与控制面板
   outputs: !include packages/outputs.yaml
   buttons: !include packages/buttons.yaml
   switches: !include packages/switches.yaml
   numbers: !include packages/numbers.yaml
   text_sensors: !include packages/text_sensors.yaml
   selects: !include packages/selects.yaml
+  # 定时逻辑与全局状态
   intervals: !include packages/intervals.yaml
   globals: !include packages/globals.yaml
+  # 脚本流程
   scripts: !include packages/scripts.yaml
