@@ -45,7 +45,7 @@ globals:
   - id: REFERENCE_WAVEFORMS
     type: std::vector<std::vector<int>>
     restore_value: no
-    initial_value: !include include/reference_waveforms.yaml
+    initial_value: !include ../include/reference_waveforms.yaml
 
   - id: REFERENCE_STATUS
     type: std::vector<std::vector<int>>
